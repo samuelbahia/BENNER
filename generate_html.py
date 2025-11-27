@@ -689,6 +689,13 @@ def generate_html(tables: dict, stats: dict, output_path: str):
                 <div id="dashboard">
                     <h2 style="margin-bottom: 1.5rem;">📈 Dashboard</h2>
                     
+                    <div class="export-buttons" style="margin-bottom: 1.5rem;">
+                        <button class="btn btn-primary" onclick="exportAllExcel()">📊 Exportar Excel Completo</button>
+                        <button class="btn btn-secondary" onclick="exportModulesExcel()">📋 Índice de Tabelas</button>
+                        <button class="btn btn-secondary" onclick="exportRelationshipsExcel()">🔗 Relacionamentos</button>
+                        <button class="btn btn-secondary" onclick="exportAllJSON()">📄 Exportar JSON</button>
+                    </div>
+                    
                     <div class="dashboard" id="statsCards">
                         <!-- Stats serão preenchidos via JS -->
                     </div>
@@ -728,6 +735,7 @@ def generate_html(tables: dict, stats: dict, output_path: str):
                     <p id="tableDescription" style="margin-bottom: 1rem; color: var(--text-secondary);"></p>
                     
                     <div class="export-buttons">
+                        <button class="btn btn-primary" onclick="exportTableExcel()">📊 Exportar Excel</button>
                         <button class="btn btn-secondary" onclick="exportTableJSON()">📄 Exportar JSON</button>
                         <button class="btn btn-secondary" onclick="exportTableDBML()">📐 Exportar DBML</button>
                         <button class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir</button>
@@ -1227,7 +1235,7 @@ def generate_html(tables: dict, stats: dict, output_path: str):
             });
             dbml += '}';
             
-            const blob = new Blob([dbml.replace(/\\n/g, '\\n')], {type: 'text/plain'});
+            const blob = new Blob([dbml], {type: 'text/plain'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1242,6 +1250,120 @@ def generate_html(tables: dict, stats: dict, output_path: str):
             const a = document.createElement('a');
             a.href = url;
             a.download = 'dicionario_dados_completo.json';
+            a.click();
+        }
+        
+        // Excel Export Functions
+        function escapeCSV(str) {
+            if (str == null) return '';
+            str = String(str);
+            if (str.includes(',') || str.includes('"') || str.includes('\\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+        
+        function exportTableExcel() {
+            if (!currentTable) return;
+            const table = TABLES[currentTable];
+            
+            let csv = '\\uFEFF'; // BOM for Excel UTF-8
+            csv += 'Campo,Tipo,Tamanho,Nulo,Descrição,FK Tabela\\n';
+            
+            table.fields.forEach(f => {
+                csv += [
+                    escapeCSV(f.name),
+                    escapeCSV(f.type),
+                    escapeCSV(f.size || ''),
+                    escapeCSV(f.nullable === true ? 'Sim' : (f.nullable === false ? 'Não' : '')),
+                    escapeCSV(f.description || ''),
+                    escapeCSV(f.fk_table || '')
+                ].join(',') + '\\n';
+            });
+            
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentTable + '.csv';
+            a.click();
+        }
+        
+        function exportAllExcel() {
+            // Export complete data dictionary to Excel-compatible format
+            let csv = '\\uFEFF'; // BOM for Excel UTF-8
+            csv += 'Tabela,Módulo,Campo,Tipo,Tamanho,Nulo,Descrição,FK Tabela\\n';
+            
+            Object.entries(TABLES).sort((a, b) => a[0].localeCompare(b[0])).forEach(([tableName, table]) => {
+                table.fields.forEach(f => {
+                    csv += [
+                        escapeCSV(tableName),
+                        escapeCSV(table.module),
+                        escapeCSV(f.name),
+                        escapeCSV(f.type),
+                        escapeCSV(f.size || ''),
+                        escapeCSV(f.nullable === true ? 'Sim' : (f.nullable === false ? 'Não' : '')),
+                        escapeCSV(f.description || ''),
+                        escapeCSV(f.fk_table || '')
+                    ].join(',') + '\\n';
+                });
+            });
+            
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dicionario_dados_completo.csv';
+            a.click();
+        }
+        
+        function exportRelationshipsExcel() {
+            // Export all relationships to Excel-compatible format
+            let csv = '\\uFEFF'; // BOM for Excel UTF-8
+            csv += 'Tabela Origem,Campo,Tabela Destino,Campo Destino\\n';
+            
+            Object.entries(TABLES).sort((a, b) => a[0].localeCompare(b[0])).forEach(([tableName, table]) => {
+                table.relationships.forEach(rel => {
+                    csv += [
+                        escapeCSV(tableName),
+                        escapeCSV(rel.field),
+                        escapeCSV(rel.references_table),
+                        escapeCSV(rel.references_field)
+                    ].join(',') + '\\n';
+                });
+            });
+            
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'relacionamentos.csv';
+            a.click();
+        }
+        
+        function exportModulesExcel() {
+            // Export tables index by module
+            let csv = '\\uFEFF'; // BOM for Excel UTF-8
+            csv += 'Módulo,Nome do Módulo,Tabela,Qtd Campos,Qtd Relacionamentos\\n';
+            
+            Object.entries(TABLES).sort((a, b) => {
+                if (a[1].module !== b[1].module) return a[1].module.localeCompare(b[1].module);
+                return a[0].localeCompare(b[0]);
+            }).forEach(([tableName, table]) => {
+                csv += [
+                    escapeCSV(table.module),
+                    escapeCSV(table.module_name),
+                    escapeCSV(tableName),
+                    escapeCSV(table.fields.length),
+                    escapeCSV(table.relationships.length)
+                ].join(',') + '\\n';
+            });
+            
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'indice_tabelas.csv';
             a.click();
         }
     </script>
