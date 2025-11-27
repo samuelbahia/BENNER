@@ -724,9 +724,12 @@
                     dataDict = await response.json();
                     renderApp();
                     return;
+                } else if (response.status !== 404) {
+                    console.warn(`Failed to load datadict.json: HTTP ${response.status}`);
                 }
             } catch (e) {
-                console.log('External JSON not found, using embedded data');
+                // Network error or file not found - fall back to embedded data
+                console.log('External JSON not found or failed to load, using embedded data');
             }
 
             // Use embedded data if external file not available

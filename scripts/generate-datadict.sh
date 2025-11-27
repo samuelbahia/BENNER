@@ -42,12 +42,21 @@ if [ ! -f "$INPUT_FILE" ]; then
 fi
 echo -e "${GREEN}✓ Arquivo de entrada: $INPUT_FILE${NC}"
 
-# Verifica se Python está instalado
+# Verifica se Python está instalado e versão mínima
 if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}✗ Erro: Python 3 não encontrado. Por favor, instale o Python 3.${NC}"
+    echo -e "${RED}✗ Erro: Python 3 não encontrado. Por favor, instale o Python 3.6+${NC}"
     exit 1
 fi
-echo -e "${GREEN}✓ Python 3 encontrado${NC}"
+
+# Verifica versão do Python (requer 3.6+)
+PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
+PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
+if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 6 ]); then
+    echo -e "${RED}✗ Erro: Python 3.6+ é necessário (encontrado: $PYTHON_VERSION)${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✓ Python $PYTHON_VERSION encontrado${NC}"
 
 # Verifica se o parser existe
 if [ ! -f "$PARSER_SCRIPT" ]; then

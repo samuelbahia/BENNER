@@ -15,9 +15,10 @@ import os
 from collections import defaultdict
 from datetime import datetime
 
-# Caminho padrão do arquivo de entrada
-DEFAULT_INPUT_FILE = "../Dicionario de Dados.txt"
-DEFAULT_OUTPUT_FILE = "datadict.json"
+# Caminho padrão do arquivo de entrada (relativo ao diretório do script)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_INPUT_FILE = os.path.join(SCRIPT_DIR, "..", "Dicionario de Dados.txt")
+DEFAULT_OUTPUT_FILE = os.path.join(SCRIPT_DIR, "datadict.json")
 
 # Padrões regex para extração
 TABLE_PATTERN = r'^([A-Z][A-Z0-9_]+):\s*(.*)$'
@@ -382,6 +383,10 @@ def extract_fields(content, table_name):
                 })
     
     # Adiciona campos padrão se não existirem
+    # NOTA: HANDLE e Z_GRUPO são campos padrão do Benner Legal presentes em todas as tabelas.
+    # HANDLE é a chave primária única, e Z_GRUPO define o grupo de segurança.
+    # Estes campos podem não aparecer explicitamente no arquivo de texto, mas são
+    # sempre criados pelo framework Benner. Esta lógica garante sua inclusão.
     has_handle = any(f['name'] == 'HANDLE' for f in fields)
     has_zgrupo = any(f['name'] == 'Z_GRUPO' for f in fields)
     
