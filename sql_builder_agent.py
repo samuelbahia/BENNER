@@ -78,7 +78,9 @@ class SQLBuilderAgent:
     def load_schema_from_dict(self, schema_text: str):
         """
         Parse the schema from the data dictionary text file
-        Handles the BENNER format where column info is concatenated
+        Supports two formats:
+        1. Tab-separated: COLUMN\tType\tNull\tDescription
+        2. Concatenated BENNER format (attempts to parse)
         """
         current_table = None
         
@@ -87,7 +89,9 @@ class SQLBuilderAgent:
         
         for line in lines:
             line = line.strip()
-            if not line or line == 'ESTRUTURA DAS TABELAS':
+            
+            # Skip empty lines and comments
+            if not line or line.startswith('#'):
                 continue
             
             # Detect table name (ends with ':')
@@ -102,11 +106,35 @@ class SQLBuilderAgent:
                     self.tables[table_name] = current_table
                 continue
             
-            # Try to parse concatenated column format
-            # Pattern: COLUMNNAMETypeNullDescriptionTABLE or COLUMNNAMETYPENULLDESCRIÇÃOTABELA
+            # Try to parse tab-separated format first
+            if current_table and '\t' in line:
+                parts = line.split('\t')
+                if len(parts) >= 3:
+                    col_name = parts[0].strip()
+                    col_type = parts[1].strip()
+                    nullable_flag = parts[2].strip()
+                    description = parts[3].strip() if len(parts) > 3 else ""
+                    
+                    # Validate column name
+                    if col_name and re.match(r'^[A-Z_][A-Z0-9_]*$', col_name) and col_type:
+                        nullable = nullable_flag.upper() in ('S', 'Y', 'YES', 'SIM')
+                        
+                        # Clean up description - remove foreign key references
+                        description = description.split('|')[0] if '|' in description else description
+                        
+                        column = Column(
+                            name=col_name,
+                            table=current_table.name,
+                            data_type=col_type,
+                            nullable=nullable,
+                            description=description.strip()
+                        )
+                        current_table.columns.append(column)
+                continue
+            
+            # Try to parse concatenated format (BENNER specific)
             if current_table:
-                # Look for common data types to split columns
-                # Pattern examples: HANDLEIntegerNCódigo, NOMEVarchar (80)NNome
+                # Pattern for concatenated columns: COLUMNNAMETypeNullDescription
                 column_pattern = r'([A-Z_][A-Z0-9_]*)(Integer|Varchar\s*\([^)]+\)|Number|Data|Char\s*\([^)]+\)|Blob)([NS])(.+?)(?=[A-Z_][A-Z0-9_]*(Integer|Varchar|Number|Data|Char|Blob)|$)'
                 
                 matches = re.finditer(column_pattern, line)
@@ -116,11 +144,9 @@ class SQLBuilderAgent:
                     nullable_flag = match.group(3).strip()
                     description = match.group(4).strip()
                     
-                    # Skip if column name is actually a table name or keyword
-                    if col_name in ['NOME', 'TIPO', 'NULL', 'TABELA', 'DESCRICAO']:
-                        # These might be header keywords, skip
-                        if col_type == 'Integer' and not current_table.columns:
-                            continue
+                    # Skip header keywords on first line of table
+                    if col_name in ['NOME', 'TIPO', 'NULL', 'TABELA', 'DESCRICAO'] and not current_table.columns:
+                        continue
                     
                     # Validate column name
                     if col_name and len(col_name) > 1:
@@ -128,7 +154,7 @@ class SQLBuilderAgent:
                         
                         # Clean up description
                         description = re.sub(r'^[SN]', '', description)
-                        description = description.split('|')[0]  # Take first part if pipe-separated
+                        description = description.split('|')[0]
                         
                         column = Column(
                             name=col_name,

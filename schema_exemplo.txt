@@ -1,0 +1,126 @@
+# Schema do Banco de Dados - Formato Simplificado
+# Este arquivo pode ser usado como exemplo ou para testes
+
+Z_GRUPOUSUARIOS:
+HANDLE	Integer	N	User ID
+Z_GRUPO	Integer	N	Group ID
+NOME	Varchar(80)	N	User name
+EMAIL	Varchar(100)	S	Email address
+SENHA	Varchar(100)	S	Password
+ATIVO	Char(1)	N	Active status
+
+PR_PROCESSOS:
+HANDLE	Integer	N	Process ID
+Z_GRUPO	Integer	N	Group ID
+NUMERO	Varchar(40)	N	Process number
+USUARIO	Integer	S	User ID|Z_GRUPOUSUARIOS
+DEPARTAMENTO	Integer	S	Department ID|PR_DEPARTAMENTOS
+STATUS	Varchar(20)	N	Process status
+DATA_ABERTURA	Data	N	Opening date
+DATA_ENCERRAMENTO	Data	S	Closing date
+VALOR	Number	S	Process value
+OBSERVACOES	Blob	S	Observations
+
+PR_DEPARTAMENTOS:
+HANDLE	Integer	N	Department ID
+Z_GRUPO	Integer	N	Group ID
+NOME	Varchar(80)	N	Department name
+SIGLA	Varchar(10)	S	Abbreviation
+ATIVO	Char(1)	N	Active status
+
+PR_PROCESSOPEDIDOS:
+HANDLE	Integer	N	Request ID
+Z_GRUPO	Integer	N	Group ID
+PROCESSO	Integer	N	Process ID|PR_PROCESSOS
+PEDIDO	Integer	N	Request ID|PR_PEDIDOS
+VALOR	Number	N	Request value
+DATA	Data	N	Request date
+STATUS	Varchar(20)	N	Status
+
+PR_PEDIDOS:
+HANDLE	Integer	N	Petition ID
+Z_GRUPO	Integer	N	Group ID
+DESCRICAO	Varchar(250)	N	Description
+TIPO	Varchar(50)	S	Type
+ATIVO	Char(1)	N	Active status
+
+PR_PROCESSOPARTICIPANTES:
+HANDLE	Integer	N	Participant ID
+Z_GRUPO	Integer	N	Group ID
+PROCESSO	Integer	N	Process ID|PR_PROCESSOS
+PESSOA	Integer	N	Person ID|GN_PESSOAS
+TIPO	Varchar(50)	N	Participant type
+DATA_INCLUSAO	Data	N	Inclusion date
+
+GN_PESSOAS:
+HANDLE	Integer	N	Person ID
+Z_GRUPO	Integer	N	Group ID
+NOME	Varchar(150)	N	Full name
+CPF_CNPJ	Varchar(20)	S	CPF/CNPJ
+TIPO_PESSOA	Char(1)	N	Person type (F/J)
+EMAIL	Varchar(100)	S	Email
+TELEFONE	Varchar(20)	S	Phone
+ENDERECO	Varchar(200)	S	Address
+CIDADE	Integer	S	City ID|MUNICIPIOS
+ESTADO	Integer	S	State ID|ESTADOS
+CEP	Varchar(10)	S	Postal code
+
+ESTADOS:
+HANDLE	Integer	N	State ID
+Z_GRUPO	Integer	N	Group ID
+NOME	Varchar(50)	N	State name
+UF	Varchar(2)	N	State abbreviation
+PAIS	Integer	N	Country ID|PAISES
+
+MUNICIPIOS:
+HANDLE	Integer	N	City ID
+Z_GRUPO	Integer	N	Group ID
+NOME	Varchar(80)	N	City name
+ESTADO	Integer	N	State ID|ESTADOS
+CODIGO_IBGE	Varchar(10)	S	IBGE code
+
+PAISES:
+HANDLE	Integer	N	Country ID
+Z_GRUPO	Integer	N	Group ID
+NOME	Varchar(80)	N	Country name
+SIGLA	Varchar(3)	N	Country code
+
+AG_COMPROMISSOS:
+HANDLE	Integer	N	Appointment ID
+Z_GRUPO	Integer	N	Group ID
+COMPROMISSO	Varchar(80)	N	Appointment
+USUARIO	Integer	N	User ID|Z_GRUPOUSUARIOS
+DATA_INICIO	Data	N	Start date
+DATA_FIM	Data	N	End date
+ONDE	Varchar(80)	S	Location
+PASTA	Integer	S	Process ID|PR_PROCESSOS
+OBSERVACOES	Blob	S	Notes
+CUMPRIDO	Char(1)	N	Completed
+
+FI_SOLICITACAOPAGAMENTOS:
+HANDLE	Integer	N	Payment ID
+Z_GRUPO	Integer	N	Group ID
+PROCESSO	Integer	S	Process ID|PR_PROCESSOS
+PESSOA	Integer	N	Person ID|GN_PESSOAS
+VALOR	Number	N	Amount
+DATA_SOLICITACAO	Data	N	Request date
+DATA_PAGAMENTO	Data	S	Payment date
+STATUS	Varchar(20)	N	Status
+FORMA_PAGAMENTO	Varchar(50)	S	Payment method
+OBSERVACOES	Blob	S	Notes
+
+PR_CATEGORIAS:
+HANDLE	Integer	N	Category ID
+Z_GRUPO	Integer	N	Group ID
+NOME	Varchar(80)	N	Category name
+DESCRICAO	Varchar(250)	S	Description
+ATIVO	Char(1)	N	Active status
+
+PR_PROCESSOEVENTOS:
+HANDLE	Integer	N	Event ID
+Z_GRUPO	Integer	N	Group ID
+PROCESSO	Integer	N	Process ID|PR_PROCESSOS
+EVENTO	Varchar(100)	N	Event name
+DATA	Data	N	Event date
+RESPONSAVEL	Integer	S	Responsible ID|Z_GRUPOUSUARIOS
+DESCRICAO	Blob	S	Description

@@ -16,19 +16,44 @@ sql_agent = SQLBuilderAgent()
 # Load schema from the data dictionary file
 def load_schema():
     """Load the database schema from the data dictionary"""
+    # Try main dictionary first
     dict_file = 'Dicionario de Dados.txt'
     if os.path.exists(dict_file):
         try:
             with open(dict_file, 'r', encoding='utf-8', errors='ignore') as f:
                 schema_text = f.read()
                 sql_agent.load_schema_from_dict(schema_text)
-                print(f"Loaded {len(sql_agent.tables)} tables from schema")
+                
+                # Check if we got any columns
+                tables_with_columns = sum(1 for t in sql_agent.tables.values() if t.columns)
+                
+                if tables_with_columns > 0:
+                    print(f"Loaded {len(sql_agent.tables)} tables ({tables_with_columns} with columns) from {dict_file}")
+                    return
+                else:
+                    print(f"Loaded {len(sql_agent.tables)} tables but no columns from {dict_file}, trying example schema")
         except Exception as e:
-            print(f"Error loading schema: {e}")
-            # Create a sample schema if loading fails
-            create_sample_schema()
-    else:
-        create_sample_schema()
+            print(f"Error loading schema from {dict_file}: {e}")
+    
+    # Try example schema
+    example_file = 'schema_exemplo.txt'
+    if os.path.exists(example_file):
+        try:
+            with open(example_file, 'r', encoding='utf-8') as f:
+                schema_text = f.read()
+                sql_agent.reset()  # Clear any partial data
+                sql_agent.tables.clear()
+                sql_agent.load_schema_from_dict(schema_text)
+                
+                tables_with_columns = sum(1 for t in sql_agent.tables.values() if t.columns)
+                print(f"Loaded {len(sql_agent.tables)} tables ({tables_with_columns} with columns) from {example_file}")
+                return
+        except Exception as e:
+            print(f"Error loading schema from {example_file}: {e}")
+    
+    # Fall back to creating sample schema
+    print("No schema file found, creating sample schema")
+    create_sample_schema()
 
 def create_sample_schema():
     """Create a sample schema for demonstration"""
