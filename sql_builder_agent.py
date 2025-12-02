@@ -78,39 +78,64 @@ class SQLBuilderAgent:
     def load_schema_from_dict(self, schema_text: str):
         """
         Parse the schema from the data dictionary text file
+        Handles the BENNER format where column info is concatenated
         """
         current_table = None
-        lines = schema_text.split('\n')
+        
+        # Split by both newline and carriage return
+        lines = schema_text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
         
         for line in lines:
             line = line.strip()
-            if not line:
-                continue
-                
-            # Detect table name (pattern: "NUMBER. TABLE_NAME:")
-            table_match = re.match(r'^\d+\.\s+([A-Z_]+):\s*$', line)
-            if table_match:
-                table_name = table_match.group(1)
-                current_table = Table(name=table_name)
-                self.tables[table_name] = current_table
+            if not line or line == 'ESTRUTURA DAS TABELAS':
                 continue
             
-            # Parse column definitions
-            if current_table and '\t' in line:
-                parts = line.split('\t')
-                if len(parts) >= 3:
-                    col_name = parts[0].strip()
-                    col_type = parts[1].strip()
-                    nullable = parts[2].strip() == 'S'
-                    description = parts[3].strip() if len(parts) > 3 else ""
+            # Detect table name (ends with ':')
+            if line.endswith(':'):
+                table_name = line.rstrip(':').strip()
+                # Clean up table name - remove numbering
+                table_name = re.sub(r'^\d+\.\s+', '', table_name)
+                
+                # Only create if it's a reasonable table name
+                if len(table_name) > 2 and re.match(r'^[A-Z_][A-Z0-9_]*$', table_name):
+                    current_table = Table(name=table_name)
+                    self.tables[table_name] = current_table
+                continue
+            
+            # Try to parse concatenated column format
+            # Pattern: COLUMNNAMETypeNullDescriptionTABLE or COLUMNNAMETYPENULLDESCRIÇÃOTABELA
+            if current_table:
+                # Look for common data types to split columns
+                # Pattern examples: HANDLEIntegerNCódigo, NOMEVarchar (80)NNome
+                column_pattern = r'([A-Z_][A-Z0-9_]*)(Integer|Varchar\s*\([^)]+\)|Number|Data|Char\s*\([^)]+\)|Blob)([NS])(.+?)(?=[A-Z_][A-Z0-9_]*(Integer|Varchar|Number|Data|Char|Blob)|$)'
+                
+                matches = re.finditer(column_pattern, line)
+                for match in matches:
+                    col_name = match.group(1).strip()
+                    col_type = match.group(2).strip()
+                    nullable_flag = match.group(3).strip()
+                    description = match.group(4).strip()
                     
-                    if col_name and col_type:
+                    # Skip if column name is actually a table name or keyword
+                    if col_name in ['NOME', 'TIPO', 'NULL', 'TABELA', 'DESCRICAO']:
+                        # These might be header keywords, skip
+                        if col_type == 'Integer' and not current_table.columns:
+                            continue
+                    
+                    # Validate column name
+                    if col_name and len(col_name) > 1:
+                        nullable = nullable_flag.upper() in ('S', 'Y')
+                        
+                        # Clean up description
+                        description = re.sub(r'^[SN]', '', description)
+                        description = description.split('|')[0]  # Take first part if pipe-separated
+                        
                         column = Column(
                             name=col_name,
                             table=current_table.name,
                             data_type=col_type,
                             nullable=nullable,
-                            description=description
+                            description=description.strip()
                         )
                         current_table.columns.append(column)
     
