@@ -289,16 +289,16 @@ class TestSchemaLoading(unittest.TestCase):
         
         schema_text = """
 1. Z_GRUPOUSUARIOS:  
-NOMETIPONULLDESCRI��OTABELA
-HANDLE	Integer	NC�digo
+NOMETIPONULLDESCRIÇÃOTABELA
+HANDLE	Integer	NCódigo
 Z_GRUPO	Integer	NGrupo
 NOME	Varchar (80)	NNome
 
 2. PR_PROCESSOS:  
-NOME	TIPONULLDESCRI��OTABELA
-HANDLE	Integer	NC�digo
-NUMERO	Varchar (40)	NN�mero
-USUARIO	Integer	SUsu�rioZ_GRUPOUSUARIOS
+NOME	TIPONULLDESCRIÇÃOTABELA
+HANDLE	Integer	NCódigo
+NUMERO	Varchar (40)	NNúmero
+USUARIO	Integer	SUsuárioZ_GRUPOUSUARIOS
 """
         
         agent.load_schema_from_dict(schema_text)
