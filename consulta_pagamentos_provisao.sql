@@ -40,11 +40,11 @@
 SELECT 
     p.IDENTIFICADOR AS PASTA, -- Identificação da Pasta
     p.SITUACAO, -- Situação do Processo
-    (SUM(dep.VALOR) + SUM(pagamento.VALORTOTAL)) AS TOTAL_VALOR_PAGO, -- Total de Depósitos e Pagamentos
-    (SUM(dep.VALOR) + SUM(pagamento.VALORTOTAL) - provisao.VALORTOTALATUAL) AS DIFERENCA_ABSOLUTA, -- Diferença Absoluta
+    (COALESCE(SUM(dep.VALOR), 0) + COALESCE(SUM(pagamento.VALORTOTAL), 0)) AS TOTAL_VALOR_PAGO, -- Total de Depósitos e Pagamentos
+    (COALESCE(SUM(dep.VALOR), 0) + COALESCE(SUM(pagamento.VALORTOTAL), 0) - provisao.VALORTOTALATUAL) AS DIFERENCA_ABSOLUTA, -- Diferença Absoluta
     CASE 
         WHEN provisao.VALORTOTALATUAL > 0 THEN 
-            ROUND(((SUM(dep.VALOR) + SUM(pagamento.VALORTOTAL) - provisao.VALORTOTALATUAL) / provisao.VALORTOTALATUAL) * 100, 2)
+            ROUND(((COALESCE(SUM(dep.VALOR), 0) + COALESCE(SUM(pagamento.VALORTOTAL), 0) - provisao.VALORTOTALATUAL) / provisao.VALORTOTALATUAL) * 100, 2)
         ELSE NULL
     END AS PERCENTUAL_VARIACAO, -- Percentual de Variação
     CASE p.RISCO
@@ -56,9 +56,9 @@ SELECT
     prog.NOME AS PROGRAMA, -- Programa
     plano.NOME AS PLANO, -- Plano
     ped.K9_NOMEINTEGRACAO AS PEDIDO, -- Pedido
-    SUM(dep.VALOR) AS TOTAL_DEPOSITOS, -- Total de Depósitos
-    SUM(pagamento.VALORTOTAL) AS TOTAL_PAGAMENTOS, -- Total de Pagamentos
-    SUM(provisao.VALORTOTALATUAL) AS PROVISAO_ATUAL -- Provisão Atual
+    COALESCE(SUM(dep.VALOR), 0) AS TOTAL_DEPOSITOS, -- Total de Depósitos
+    COALESCE(SUM(pagamento.VALORTOTAL), 0) AS TOTAL_PAGAMENTOS, -- Total de Pagamentos
+    provisao.VALORTOTALATUAL AS PROVISAO_ATUAL -- Provisão Atual
 FROM 
     PR_PROCESSOS p
 LEFT JOIN K9_PASTAPROGRAMAPLANO ppp ON ppp.PASTA = p.HANDLE
