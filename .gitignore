@@ -1,0 +1,11 @@
+# Dependências Python (não commitar)
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivo de variáveis de ambiente com credenciais reais
+.env
+
+# Dados extraídos localmente (não pertencem ao repositório)
+BennerData/
+C:/BennerData/
