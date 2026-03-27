@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benner Legal - Explorador de Dicionário de Dados</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #7c3aed;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header h1 .icon {
+            font-size: 2rem;
+        }
+
+        /* Search Box */
+        .search-container {
+            flex: 1;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), var(--shadow-lg);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-item .value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 1.5rem;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .module-list {
+            list-style: none;
+        }
+
+        .module-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .module-item:hover {
+            background: var(--background);
+        }
+
+        .module-item.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        .module-item .count {
+            background: var(--background);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .module-item.active .count {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Content Area */
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--surface);
+            padding: 0.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        /* Table Grid */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .table-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .table-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .table-card h3 {
+            font-size: 1rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-card .description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .table-card .meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .table-card .meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Table Detail View */
+        .table-detail {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-detail-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .table-detail-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .table-detail-header .description {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .table-detail-header .meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            transition: background 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Fields Table */
+        .fields-container {
+            padding: 1.5rem;
+        }
+
+        .fields-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .fields-table th {
+            text-align: left;
+            padding: 1rem;
+            background: var(--background);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .fields-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .fields-table tr:hover td {
+            background: var(--background);
+        }
+
+        .field-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .field-type {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: var(--background);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+        }
+
+        .nullable-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .nullable-badge.yes {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .nullable-badge.no {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .reference-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .reference-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Relationships Section */
+        .relationships-section {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--background);
+            border-radius: 12px;
+        }
+
+        .relationships-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .relationship-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .relationship-tag {
+            background: var(--surface);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .relationship-tag:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Statistics Tab */
+        .stats-container {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .module-chart {
+            background: var(--background);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .module-chart h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .chart-bar .label {
+            width: 150px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .chart-bar .bar-container {
+            flex: 1;
+            background: var(--border-color);
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chart-bar .bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding-left: 0.5rem;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: fit-content;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .search-container {
+                max-width: 100%;
+            }
+
+            .stats-bar {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            .tables-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>
+                <span class="icon">📊</span>
+                Benner Legal - Dicionário de Dados
+            </h1>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar tabelas, campos, descrições...">
+            </div>
+            <div class="stats-bar" id="statsBar">
+                <div class="stat-item">
+                    <span>📋</span>
+                    <span class="value" id="totalTables">-</span>
+                    <span>Tabelas</span>
+                </div>
+                <div class="stat-item">
+                    <span>📝</span>
+                    <span class="value" id="totalFields">-</span>
+                    <span>Campos</span>
+                </div>
+                <div class="stat-item">
+                    <span>🔗</span>
+                    <span class="value" id="totalRelations">-</span>
+                    <span>Relacionamentos</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <aside class="sidebar">
+            <h2>📁 Módulos</h2>
+            <ul class="module-list" id="moduleList">
+                <!-- Populated by JavaScript -->
+            </ul>
+        </aside>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="tables" onclick="switchTab('tables')">
+                    📋 Tabelas
+                </button>
+                <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
+                    📊 Estatísticas
+                </button>
+            </div>
+
+            <div id="tabContent">
+                <div class="loading" id="loadingState">
+                    <div class="spinner"></div>
+                    <p>Carregando dados...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global state
+        let dataDict = null;
+        let currentModule = 'all';
+        let currentView = 'list'; // 'list' or 'detail'
+        let currentTable = null;
+        let searchTerm = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchTerm = e.target.value.toLowerCase();
+                renderTablesGrid();
+            });
+        }
+
+        async function loadData() {
+            try {
+                // Try to load from external JSON file first
+                const response = await fetch('datadict.json');
+                if (response.ok) {
+                    dataDict = await response.json();
+                    renderApp();
+                    return;
+                } else if (response.status !== 404) {
+                    console.warn(`Failed to load datadict.json: HTTP ${response.status}`);
+                }
+            } catch (e) {
+                // Network error or file not found - fall back to embedded data
+                console.log('External JSON not found or failed to load, using embedded data');
+            }
+
+            // Use embedded data if external file not available
+            if (typeof EMBEDDED_DATA !== 'undefined') {
+                dataDict = EMBEDDED_DATA;
+                renderApp();
+            } else {
+                document.getElementById('loadingState').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <h3>Dados não encontrados</h3>
+                        <p>Execute o parser para gerar o arquivo datadict.json</p>
+                        <code style="display: block; margin-top: 1rem; background: var(--background); padding: 1rem; border-radius: 8px;">
+                            python3 parser_datadict.py
+                        </code>
+                    </div>
+                `;
+            }
+        }
+
+        function renderApp() {
+            updateStats();
+            renderModuleList();
+            renderTablesGrid();
+        }
+
+        function updateStats() {
+            document.getElementById('totalTables').textContent = dataDict.metadata.total_tables.toLocaleString();
+            document.getElementById('totalFields').textContent = dataDict.metadata.total_fields.toLocaleString();
+            document.getElementById('totalRelations').textContent = dataDict.metadata.total_relationships.toLocaleString();
+        }
+
+        function renderModuleList() {
+            const moduleList = document.getElementById('moduleList');
+            const stats = dataDict.module_stats;
+            
+            // Sort modules by table count
+            const sortedModules = Object.entries(stats)
+                .sort((a, b) => b[1].tables - a[1].tables);
+
+            let html = `
+                <li class="module-item ${currentModule === 'all' ? 'active' : ''}" onclick="selectModule('all')">
+                    <span>📁 Todos</span>
+                    <span class="count">${dataDict.metadata.total_tables}</span>
+                </li>
+            `;
+
+            for (const [module, data] of sortedModules) {
+                html += `
+                    <li class="module-item ${currentModule === module ? 'active' : ''}" onclick="selectModule('${module}')">
+                        <span>${getModuleIcon(module)} ${module}</span>
+                        <span class="count">${data.tables}</span>
+                    </li>
+                `;
+            }
+
+            moduleList.innerHTML = html;
+        }
+
+        function getModuleIcon(module) {
+            const icons = {
+                'Processos': '⚖️',
+                'Financeiro': '💰',
+                'Financeiro Integrado': '💳',
+                'Geral': '🔧',
+                'Escritórios Jurídicos': '🏢',
+                'Cálculo Trabalhista': '📐',
+                'Contabilidade': '📒',
+                'Biblioteca': '📚',
+                'Agenda': '📅',
+                'Localização': '📍',
+                'Empresas': '🏭',
+                'Gestão de Documentos': '📄',
+                'Sistema': '⚙️',
+                'eSocial': '👥',
+                'Circularização': '🔄',
+                'Conciliação Bancária': '🏦',
+                'Extrajudicial': '📝',
+                'Sociedades': '🤝'
+            };
+            return icons[module] || '📂';
+        }
+
+        function selectModule(module) {
+            currentModule = module;
+            currentView = 'list';
+            renderModuleList();
+            renderTablesGrid();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+
+            if (tab === 'tables') {
+                currentView = 'list';
+                renderTablesGrid();
+            } else if (tab === 'stats') {
+                renderStats();
+            }
+        }
+
+        function renderTablesGrid() {
+            if (!dataDict) return;
+
+            const content = document.getElementById('tabContent');
+            const tables = Object.values(dataDict.tables);
+
+            // Filter tables
+            let filtered = tables;
+            
+            if (currentModule !== 'all') {
+                filtered = filtered.filter(t => t.module === currentModule);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(t => 
+                    t.name.toLowerCase().includes(searchTerm) ||
+                    (t.description && t.description.toLowerCase().includes(searchTerm)) ||
+                    t.fields.some(f => f.name.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            if (filtered.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔍</div>
+                        <h3>Nenhuma tabela encontrada</h3>
+                        <p>Tente ajustar os filtros ou termos de busca</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort alphabetically
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+            const html = `
+                <div class="tables-grid">
+                    ${filtered.map(table => `
+                        <div class="table-card" onclick="showTableDetail('${table.name}')">
+                            <h3>
+                                📋 ${table.name}
+                            </h3>
+                            <p class="description">${table.description || 'Sem descrição disponível'}</p>
+                            <div class="meta">
+                                <span>📝 ${table.field_count} campos</span>
+                                <span>🔗 ${table.relationships.length} refs</span>
+                                <span>📁 ${table.module}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        function showTableDetail(tableName) {
+            currentTable = tableName;
+            currentView = 'detail';
+            
+            const table = dataDict.tables[tableName];
+            if (!table) return;
+
+            const content = document.getElementById('tabContent');
+
+            const html = `
+                <div class="table-detail">
+                    <div class="table-detail-header">
+                        <button class="back-btn" onclick="renderTablesGrid()">
+                            ← Voltar para lista
+                        </button>
+                        <h2>
+                            📋 ${table.name}
+                        </h2>
+                        <p class="description">${table.description || 'Sem descrição disponível'}</p>
+                        <div class="meta">
+                            <span>📁 Módulo: ${table.module}</span>
+                            <span>📝 ${table.field_count} campos</span>
+                            <span>🔗 ${table.relationships.length} relacionamentos</span>
+                        </div>
+                    </div>
+
+                    <div class="fields-container">
+                        <table class="fields-table">
+                            <thead>
+                                <tr>
+                                    <th>Campo</th>
+                                    <th>Tipo</th>
+                                    <th>Nulo</th>
+                                    <th>Descrição</th>
+                                    <th>Referência</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${table.fields.map(field => `
+                                    <tr>
+                                        <td class="field-name">${field.name}</td>
+                                        <td><span class="field-type">${field.type}</span></td>
+                                        <td>
+                                            <span class="nullable-badge ${field.nullable ? 'yes' : 'no'}">
+                                                ${field.nullable ? 'Sim' : 'Não'}
+                                            </span>
+                                        </td>
+                                        <td>${field.description || '-'}</td>
+                                        <td>
+                                            ${field.references ? `
+                                                <a class="reference-link" onclick="showTableDetail('${field.references}')">
+                                                    🔗 ${field.references}
+                                                </a>
+                                            ` : '-'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+
+                        ${table.relationships.length > 0 ? `
+                            <div class="relationships-section">
+                                <h3>🔗 Tabelas Relacionadas</h3>
+                                <div class="relationship-list">
+                                    ${[...new Set(table.relationships)].map(ref => `
+                                        <span class="relationship-tag" onclick="showTableDetail('${ref}')">
+                                            ${ref}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        function renderStats() {
+            if (!dataDict) return;
+
+            const content = document.getElementById('tabContent');
+            const stats = dataDict.module_stats;
+            
+            // Sort by table count for chart
+            const sortedModules = Object.entries(stats)
+                .sort((a, b) => b[1].tables - a[1].tables)
+                .slice(0, 15);
+
+            const maxTables = Math.max(...sortedModules.map(([_, d]) => d.tables));
+
+            const html = `
+                <div class="stats-container">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="number">${dataDict.metadata.total_tables}</div>
+                            <div class="label">Total de Tabelas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">${dataDict.metadata.total_fields.toLocaleString()}</div>
+                            <div class="label">Total de Campos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">${dataDict.metadata.total_relationships}</div>
+                            <div class="label">Relacionamentos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">${dataDict.metadata.modules.length}</div>
+                            <div class="label">Módulos</div>
+                        </div>
+                    </div>
+
+                    <div class="module-chart">
+                        <h3>📊 Tabelas por Módulo</h3>
+                        ${sortedModules.map(([module, data]) => `
+                            <div class="chart-bar">
+                                <div class="label">${module}</div>
+                                <div class="bar-container">
+                                    <div class="bar" style="width: ${(data.tables / maxTables * 100)}%">
+                                        ${data.tables} tabelas
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="module-chart" style="margin-top: 1.5rem;">
+                        <h3>📝 Campos por Módulo</h3>
+                        ${Object.entries(stats)
+                            .sort((a, b) => b[1].fields - a[1].fields)
+                            .slice(0, 15)
+                            .map(([module, data]) => {
+                                const maxFields = Math.max(...Object.values(stats).map(d => d.fields));
+                                return `
+                                    <div class="chart-bar">
+                                        <div class="label">${module}</div>
+                                        <div class="bar-container">
+                                            <div class="bar" style="width: ${(data.fields / maxFields * 100)}%">
+                                                ${data.fields.toLocaleString()} campos
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                    </div>
+
+                    <div style="margin-top: 2rem; padding: 1rem; background: var(--background); border-radius: 12px;">
+                        <h3 style="margin-bottom: 1rem;">ℹ️ Informações do Dicionário</h3>
+                        <p><strong>Gerado em:</strong> ${new Date(dataDict.metadata.generated_at).toLocaleString('pt-BR')}</p>
+                        <p><strong>Arquivo fonte:</strong> ${dataDict.metadata.source_file}</p>
+                    </div>
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
