@@ -572,6 +572,241 @@ def generate_html(tables: dict, stats: dict, output_path: str):
             max-width: 600px;
             margin: 0 auto 2rem;
         }
+
+        /* Query Builder */
+        .qb-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .qb-header p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .qb-layout {
+            display: grid;
+            grid-template-columns: minmax(280px, 340px) 1fr;
+            gap: 1.5rem;
+        }
+
+        .qb-sidebar,
+        .qb-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .qb-panel {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .qb-panel h3,
+        .qb-panel h4 {
+            margin-bottom: 0.75rem;
+        }
+
+        .qb-search-input,
+        .qb-join-select,
+        .qb-limit-input {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .qb-search-input:focus,
+        .qb-join-select:focus,
+        .qb-limit-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .qb-table-list {
+            max-height: 520px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .qb-table-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+        }
+
+        .qb-table-item input,
+        .qb-field-item input,
+        .qb-relationship-item input,
+        .qb-limit-option input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .qb-table-item label,
+        .qb-field-item label,
+        .qb-relationship-item label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .qb-table-item-main {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .qb-table-item strong,
+        .qb-field-item strong {
+            word-break: break-word;
+        }
+
+        .qb-table-meta,
+        .qb-help-text,
+        .qb-relationship-meta,
+        .qb-diagram-note {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .qb-selected-tables,
+        .qb-relationships-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .qb-table-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            background: white;
+        }
+
+        .qb-card-header,
+        .qb-card-actions,
+        .qb-actions-row,
+        .qb-option-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .qb-card-header {
+            margin-bottom: 0.75rem;
+        }
+
+        .qb-card-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .qb-fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.5rem 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .qb-field-item {
+            padding: 0.4rem 0;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .qb-field-type {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .qb-relationship-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.85rem 0.9rem;
+        }
+
+        .qb-sql-output {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 220px;
+            overflow: auto;
+        }
+
+        .qb-sql-output pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.88rem;
+        }
+
+        .qb-warning,
+        .qb-info-box {
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .qb-warning {
+            background: #fff7ed;
+            color: #9a3412;
+            border: 1px solid #fdba74;
+        }
+
+        .qb-info-box {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .qb-diagram {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 320px;
+            overflow: auto;
+        }
+
+        .qb-diagram svg {
+            width: 100%;
+            height: auto;
+        }
+
+        .qb-diagram-meta {
+            margin-top: 0.75rem;
+        }
+
+        .qb-empty-small {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            padding: 0.5rem 0;
+        }
         
         /* Responsive */
         @media (max-width: 1024px) {
@@ -582,6 +817,10 @@ def generate_html(tables: dict, stats: dict, output_path: str):
             .sidebar {
                 position: static;
                 max-height: none;
+            }
+
+            .qb-layout {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -690,6 +929,7 @@ def generate_html(tables: dict, stats: dict, output_path: str):
                     <h2 style="margin-bottom: 1.5rem;">📈 Dashboard</h2>
                     
                     <div class="export-buttons" style="margin-bottom: 1.5rem;">
+                        <button class="btn btn-primary" onclick="qbShowBuilder()">🛠️ Construtor de Query SQL</button>
                         <button class="btn btn-primary" onclick="exportAllExcel()">📊 Exportar Excel Completo</button>
                         <button class="btn btn-secondary" onclick="exportModulesExcel()">📋 Índice de Tabelas</button>
                         <button class="btn btn-secondary" onclick="exportRelationshipsExcel()">🔗 Relacionamentos</button>
@@ -713,6 +953,101 @@ def generate_html(tables: dict, stats: dict, output_path: str):
                     <div class="chart-container">
                         <h3 class="chart-title">🔗 Tabelas Mais Referenciadas</h3>
                         <div class="bar-chart" id="referencedChart"></div>
+                    </div>
+                </div>
+
+                <!-- Query Builder -->
+                <div id="queryBuilderView" style="display: none;">
+                    <div class="breadcrumb">
+                        <a href="#" onclick="showDashboard(); return false;">Dashboard</a>
+                        <span>›</span>
+                        <span>Construtor de Query SQL</span>
+                    </div>
+
+                    <div class="qb-header">
+                        <div>
+                            <h2>🛠️ Construtor de Query SQL</h2>
+                            <p>Selecione tabelas, campos e relacionamentos existentes no dicionário para montar um SQL Oracle com aliases, JOINs automáticos e diagrama ER offline.</p>
+                        </div>
+                        <div class="qb-actions-row">
+                            <button class="btn btn-secondary" onclick="showDashboard()">← Voltar ao Dashboard</button>
+                            <button class="btn btn-secondary" onclick="qbClearAll()">🧹 Limpar tudo</button>
+                        </div>
+                    </div>
+
+                    <div class="qb-layout">
+                        <section class="qb-sidebar">
+                            <div class="qb-panel">
+                                <div class="qb-card-actions" style="margin-bottom: 0.75rem;">
+                                    <h3>📚 Tabelas</h3>
+                                    <span class="qb-help-text" id="qbSelectedCount">0 selecionadas</span>
+                                </div>
+                                <input type="text" id="qbTableFilter" class="qb-search-input" placeholder="Buscar por tabela, módulo ou descrição..." autocomplete="off">
+                                <p class="qb-help-text" style="margin: 0.75rem 0 0.5rem;">As tabelas aparecem em ordem alfabética. Ao marcar uma tabela, todos os campos são selecionados por padrão.</p>
+                                <div class="qb-table-list" id="qbTableList"></div>
+                            </div>
+                        </section>
+
+                        <section class="qb-content">
+                            <div class="qb-panel">
+                                <div class="qb-option-row">
+                                    <div>
+                                        <h3>⚙️ Opções</h3>
+                                        <p class="qb-help-text">Se nenhum campo permanecer marcado em uma tabela, o SQL usa o alias com <code>*</code> para essa tabela.</p>
+                                    </div>
+                                    <div style="min-width: 220px;">
+                                        <label for="qbJoinType" class="qb-help-text" style="display: block; margin-bottom: 0.35rem;">Tipo padrão de JOIN</label>
+                                        <select id="qbJoinType" class="qb-join-select">
+                                            <option value="INNER JOIN">INNER JOIN</option>
+                                            <option value="LEFT JOIN">LEFT JOIN</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="qb-panel">
+                                <h3>🧩 Campos selecionados por tabela</h3>
+                                <div id="qbSelectedTables" class="qb-selected-tables"></div>
+                            </div>
+
+                            <div class="qb-panel">
+                                <div class="qb-card-header">
+                                    <div>
+                                        <h3>🔗 Relacionamentos detectados</h3>
+                                        <p class="qb-help-text">Somente relacionamentos existentes em <code>fields.fk_table</code> / <code>relationships</code> são considerados. Tabelas sem conexão entram como <code>CROSS JOIN</code>.</p>
+                                    </div>
+                                </div>
+                                <div id="qbRelationshipWarning" style="display: none;"></div>
+                                <div id="qbRelationshipsList" class="qb-relationships-list"></div>
+                            </div>
+
+                            <div class="qb-panel">
+                                <div class="qb-card-header">
+                                    <div>
+                                        <h3>🧾 SQL Oracle gerado</h3>
+                                        <p class="qb-help-text">Aliases são atribuídos como <code>T1</code>, <code>T2</code>... sem usar <code>AS</code>.</p>
+                                    </div>
+                                    <div class="qb-actions-row">
+                                        <button class="btn btn-secondary" onclick="qbCopySQL()">📋 Copiar SQL</button>
+                                        <button class="btn btn-secondary" onclick="qbDownloadSQL()">💾 Baixar .sql</button>
+                                    </div>
+                                </div>
+                                <div class="qb-sql-output">
+                                    <pre id="qbSqlOutput">-- Selecione pelo menos uma tabela para gerar o SQL.</pre>
+                                </div>
+                            </div>
+
+                            <div class="qb-panel">
+                                <div class="qb-card-header">
+                                    <div>
+                                        <h3>🎨 Diagrama ER dos relacionamentos selecionados</h3>
+                                        <p class="qb-diagram-note">O diagrama mostra apenas um subconjunto de campos (PK, FKs selecionadas e alguns campos adicionais) para manter a leitura leve.</p>
+                                    </div>
+                                </div>
+                                <div id="qbDiagram" class="qb-diagram"></div>
+                                <div id="qbDiagramMeta" class="qb-diagram-meta qb-help-text"></div>
+                            </div>
+                        </section>
                     </div>
                 </div>
                 
@@ -802,12 +1137,23 @@ def generate_html(tables: dict, stats: dict, output_path: str):
         // Estado da aplicação
         let currentTable = null;
         let filteredTables = Object.keys(TABLES).sort();
+        const qbState = {
+            visible: false,
+            tableFilter: '',
+            selectedTables: [],
+            selectedFields: {},
+            availableJoins: [],
+            joinSelection: {},
+            joinType: 'INNER JOIN',
+            generatedSQL: ''
+        };
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             initModuleFilter();
             renderTableList();
             renderDashboard();
+            qbInit();
             setupEventListeners();
         });
         
@@ -915,6 +1261,687 @@ def generate_html(tables: dict, stats: dict, output_path: str):
                     </div>
                 `).join('');
         }
+
+        function qbInit() {
+            const joinTypeSelect = document.getElementById('qbJoinType');
+            const filterInput = document.getElementById('qbTableFilter');
+
+            if (joinTypeSelect) {
+                joinTypeSelect.value = qbState.joinType;
+                joinTypeSelect.addEventListener('change', function() {
+                    qbState.joinType = this.value;
+                    qbRefreshOutputs();
+                });
+            }
+
+            if (filterInput) {
+                filterInput.addEventListener('input', function() {
+                    qbState.tableFilter = this.value || '';
+                    qbRenderTableList();
+                });
+            }
+
+            qbRenderTableList();
+            qbRenderSelectedTables();
+            qbRenderRelationships();
+            qbRefreshOutputs();
+        }
+
+        function qbShowBuilder() {
+            qbState.visible = true;
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('tableDetail').style.display = 'none';
+            document.getElementById('queryBuilderView').style.display = 'block';
+            qbRenderTableList();
+            qbRenderSelectedTables();
+            qbRenderRelationships();
+            qbRefreshOutputs();
+        }
+
+        function qbGetSelectedTableSet() {
+            return new Set(qbState.selectedTables);
+        }
+
+        function qbEscapeHTML(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function qbGetFilteredTables() {
+            const query = qbState.tableFilter.trim().toLowerCase();
+            return Object.keys(TABLES).sort().filter(tableName => {
+                if (!query) return true;
+                const table = TABLES[tableName];
+                return [
+                    tableName,
+                    table.module || '',
+                    table.module_name || '',
+                    table.description || ''
+                ].some(value => String(value).toLowerCase().includes(query));
+            });
+        }
+
+        function qbRenderTableList() {
+            const container = document.getElementById('qbTableList');
+            const counter = document.getElementById('qbSelectedCount');
+            const selectedSet = qbGetSelectedTableSet();
+            const tableNames = qbGetFilteredTables();
+
+            counter.textContent = `${qbState.selectedTables.length} selecionada(s)`;
+
+            if (!tableNames.length) {
+                container.innerHTML = '<div class="empty-state">Nenhuma tabela encontrada para o filtro informado.</div>';
+                return;
+            }
+
+            container.innerHTML = tableNames.map(tableName => {
+                const table = TABLES[tableName];
+                return `
+                    <div class="qb-table-item">
+                        <label>
+                            <input type="checkbox" data-qb-table="${qbEscapeHTML(tableName)}" ${selectedSet.has(tableName) ? 'checked' : ''}>
+                            <span class="module-badge">${qbEscapeHTML(table.module || '-')}</span>
+                            <span class="qb-table-item-main">
+                                <strong>${qbEscapeHTML(tableName)}</strong>
+                                <span class="qb-table-meta">${qbEscapeHTML(table.module_name || table.description || '')}</span>
+                            </span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+
+            container.querySelectorAll('input[data-qb-table]').forEach(input => {
+                input.addEventListener('change', function() {
+                    qbToggleTable(this.dataset.qbTable, this.checked);
+                });
+            });
+        }
+
+        function qbToggleTable(tableName, shouldSelect) {
+            if (!TABLES[tableName]) return;
+
+            const alreadySelected = qbState.selectedTables.includes(tableName);
+            if (shouldSelect && !alreadySelected) {
+                qbState.selectedTables.push(tableName);
+                qbState.selectedFields[tableName] = new Set(TABLES[tableName].fields.map(field => field.name));
+            } else if (!shouldSelect && alreadySelected) {
+                qbState.selectedTables = qbState.selectedTables.filter(name => name !== tableName);
+                delete qbState.selectedFields[tableName];
+            }
+
+            qbRefreshSelection();
+        }
+
+        function qbSetAllFields(tableName, shouldSelectAll) {
+            if (!TABLES[tableName]) return;
+            qbState.selectedFields[tableName] = shouldSelectAll
+                ? new Set(TABLES[tableName].fields.map(field => field.name))
+                : new Set();
+            qbRenderSelectedTables();
+            qbRefreshOutputs();
+        }
+
+        function qbToggleField(tableName, fieldName, shouldSelect) {
+            if (!TABLES[tableName]) return;
+            if (!qbState.selectedFields[tableName]) {
+                qbState.selectedFields[tableName] = new Set();
+            }
+
+            if (shouldSelect) {
+                qbState.selectedFields[tableName].add(fieldName);
+            } else {
+                qbState.selectedFields[tableName].delete(fieldName);
+            }
+
+            qbRenderSelectedTables();
+            qbRefreshOutputs();
+        }
+
+        function qbRefreshSelection() {
+            qbDetectJoins();
+            qbRenderTableList();
+            qbRenderSelectedTables();
+            qbRenderRelationships();
+            qbRefreshOutputs();
+        }
+
+        function qbDetectJoins() {
+            const selectedSet = qbGetSelectedTableSet();
+            const joinsMap = new Map();
+
+            qbState.selectedTables.forEach(tableName => {
+                const table = TABLES[tableName];
+                if (!table) return;
+
+                table.fields.forEach(field => {
+                    if (field.fk_table && selectedSet.has(field.fk_table) && TABLES[field.fk_table]) {
+                        const joinId = `${tableName}|${field.name}|${field.fk_table}`;
+                        joinsMap.set(joinId, {
+                            id: joinId,
+                            source_table: tableName,
+                            target_table: field.fk_table,
+                            field: field.name,
+                            references_field: 'HANDLE'
+                        });
+                    }
+                });
+
+                (table.relationships || []).forEach(rel => {
+                    if (!rel.references_table || !selectedSet.has(rel.references_table) || !TABLES[rel.references_table]) {
+                        return;
+                    }
+
+                    const joinId = `${tableName}|${rel.field}|${rel.references_table}`;
+                    if (!joinsMap.has(joinId)) {
+                        joinsMap.set(joinId, {
+                            id: joinId,
+                            source_table: tableName,
+                            target_table: rel.references_table,
+                            field: rel.field,
+                            references_field: rel.references_field || 'HANDLE'
+                        });
+                    }
+                });
+            });
+
+            qbState.availableJoins = Array.from(joinsMap.values()).sort((a, b) => {
+                const tableCompare = a.source_table.localeCompare(b.source_table);
+                if (tableCompare !== 0) return tableCompare;
+                const targetCompare = a.target_table.localeCompare(b.target_table);
+                if (targetCompare !== 0) return targetCompare;
+                return a.field.localeCompare(b.field);
+            });
+
+            const availableIds = new Set(qbState.availableJoins.map(join => join.id));
+            Object.keys(qbState.joinSelection).forEach(joinId => {
+                if (!availableIds.has(joinId)) {
+                    delete qbState.joinSelection[joinId];
+                }
+            });
+
+            qbState.availableJoins.forEach(join => {
+                if (!(join.id in qbState.joinSelection)) {
+                    qbState.joinSelection[join.id] = true;
+                }
+            });
+        }
+
+        function qbRenderSelectedTables() {
+            const container = document.getElementById('qbSelectedTables');
+
+            if (!qbState.selectedTables.length) {
+                container.innerHTML = '<div class="empty-state">Selecione uma ou mais tabelas para escolher os campos que entrarão no <strong>SELECT</strong>.</div>';
+                return;
+            }
+
+            container.innerHTML = qbState.selectedTables.map(tableName => {
+                const table = TABLES[tableName];
+                const selectedFields = qbState.selectedFields[tableName] || new Set();
+                const totalFields = table.fields.length;
+                const selectedCount = selectedFields.size;
+
+                const fieldsHtml = table.fields.map(field => `
+                    <div class="qb-field-item">
+                        <label>
+                            <input type="checkbox"
+                                   data-qb-field-table="${qbEscapeHTML(tableName)}"
+                                   data-qb-field-name="${qbEscapeHTML(field.name)}"
+                                   ${selectedFields.has(field.name) ? 'checked' : ''}>
+                            <span>
+                                <strong>${qbEscapeHTML(field.name)}</strong>
+                                <span class="qb-field-type"> • ${qbEscapeHTML(field.type || 'Unknown')}${field.size ? `(${qbEscapeHTML(field.size)})` : ''}${field.fk_table ? ` • FK → ${qbEscapeHTML(field.fk_table)}` : ''}</span>
+                            </span>
+                        </label>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="qb-table-card">
+                        <div class="qb-card-header">
+                            <div class="qb-card-title">
+                                <strong>${qbEscapeHTML(tableName)}</strong>
+                                <span class="module-badge">${qbEscapeHTML(table.module || '-')}</span>
+                                <span class="qb-help-text">${selectedCount}/${totalFields} campo(s) marcado(s)</span>
+                            </div>
+                            <div class="qb-card-actions">
+                                <button class="btn btn-secondary" data-qb-select-all="${qbEscapeHTML(tableName)}">Selecionar todos</button>
+                                <button class="btn btn-secondary" data-qb-clear-fields="${qbEscapeHTML(tableName)}">Limpar campos</button>
+                            </div>
+                        </div>
+                        <div class="qb-fields-grid">${fieldsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.querySelectorAll('[data-qb-select-all]').forEach(button => {
+                button.addEventListener('click', function() {
+                    qbSetAllFields(this.dataset.qbSelectAll, true);
+                });
+            });
+
+            container.querySelectorAll('[data-qb-clear-fields]').forEach(button => {
+                button.addEventListener('click', function() {
+                    qbSetAllFields(this.dataset.qbClearFields, false);
+                });
+            });
+
+            container.querySelectorAll('input[data-qb-field-table]').forEach(input => {
+                input.addEventListener('change', function() {
+                    qbToggleField(this.dataset.qbFieldTable, this.dataset.qbFieldName, this.checked);
+                });
+            });
+        }
+
+        function qbRenderRelationships() {
+            const container = document.getElementById('qbRelationshipsList');
+
+            if (!qbState.selectedTables.length) {
+                container.innerHTML = '<div class="qb-empty-small">Selecione tabelas para detectar relacionamentos automaticamente.</div>';
+                return;
+            }
+
+            if (!qbState.availableJoins.length) {
+                container.innerHTML = '<div class="empty-state">Nenhum relacionamento detectado entre as tabelas selecionadas.</div>';
+                return;
+            }
+
+            container.innerHTML = qbState.availableJoins.map(join => `
+                <div class="qb-relationship-item">
+                    <label>
+                        <input type="checkbox" data-qb-join="${qbEscapeHTML(join.id)}" ${qbState.joinSelection[join.id] !== false ? 'checked' : ''}>
+                        <span>
+                            <strong>${qbEscapeHTML(join.source_table)}.${qbEscapeHTML(join.field)}</strong>
+                            <span>→</span>
+                            <strong>${qbEscapeHTML(join.target_table)}.${qbEscapeHTML(join.references_field)}</strong>
+                            <div class="qb-relationship-meta">${qbEscapeHTML(join.source_table)} referencia ${qbEscapeHTML(join.target_table)} pelo campo ${qbEscapeHTML(join.field)}.</div>
+                        </span>
+                    </label>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('input[data-qb-join]').forEach(input => {
+                input.addEventListener('change', function() {
+                    qbState.joinSelection[this.dataset.qbJoin] = this.checked;
+                    qbRefreshOutputs();
+                });
+            });
+        }
+
+        function qbGetSelectedJoins() {
+            return qbState.availableJoins.filter(join => qbState.joinSelection[join.id] !== false);
+        }
+
+        function qbBuildQueryPlan() {
+            const selectedTables = qbState.selectedTables.slice();
+            const selectedJoins = qbGetSelectedJoins();
+
+            if (!selectedTables.length) {
+                return {
+                    aliasMap: {},
+                    fromLines: [],
+                    islands: [],
+                    selectedJoins
+                };
+            }
+
+            const aliasMap = {};
+            const fromLines = [];
+            const included = new Set();
+            const remaining = new Set(selectedTables);
+            const baseTable = selectedTables[0];
+            let aliasCounter = 1;
+
+            aliasMap[baseTable] = `T${aliasCounter++}`;
+            included.add(baseTable);
+            remaining.delete(baseTable);
+            fromLines.push(`FROM ${baseTable} ${aliasMap[baseTable]}`);
+
+            let hasProgress = true;
+            while (remaining.size && hasProgress) {
+                hasProgress = false;
+
+                selectedJoins.forEach(join => {
+                    const sourceIncluded = included.has(join.source_table);
+                    const targetIncluded = included.has(join.target_table);
+
+                    if (sourceIncluded && remaining.has(join.target_table)) {
+                        aliasMap[join.target_table] = `T${aliasCounter++}`;
+                        fromLines.push(`${qbState.joinType} ${join.target_table} ${aliasMap[join.target_table]} ON ${aliasMap[join.source_table]}.${join.field} = ${aliasMap[join.target_table]}.${join.references_field}`);
+                        included.add(join.target_table);
+                        remaining.delete(join.target_table);
+                        hasProgress = true;
+                    } else if (targetIncluded && remaining.has(join.source_table)) {
+                        aliasMap[join.source_table] = `T${aliasCounter++}`;
+                        fromLines.push(`${qbState.joinType} ${join.source_table} ${aliasMap[join.source_table]} ON ${aliasMap[join.source_table]}.${join.field} = ${aliasMap[join.target_table]}.${join.references_field}`);
+                        included.add(join.source_table);
+                        remaining.delete(join.source_table);
+                        hasProgress = true;
+                    }
+                });
+            }
+
+            const islands = selectedTables.filter(tableName => remaining.has(tableName));
+            islands.forEach(tableName => {
+                aliasMap[tableName] = `T${aliasCounter++}`;
+                fromLines.push(`CROSS JOIN ${tableName} ${aliasMap[tableName]}`);
+                included.add(tableName);
+                remaining.delete(tableName);
+            });
+
+            return {
+                aliasMap,
+                fromLines,
+                islands,
+                selectedJoins
+            };
+        }
+
+        function qbBuildSQL() {
+            if (!qbState.selectedTables.length) {
+                qbState.generatedSQL = '';
+                return '';
+            }
+
+            const queryPlan = qbBuildQueryPlan();
+            const selectParts = [];
+
+            qbState.selectedTables.forEach(tableName => {
+                const table = TABLES[tableName];
+                const alias = queryPlan.aliasMap[tableName];
+                const selectedFields = qbState.selectedFields[tableName] || new Set();
+                const chosenFields = table.fields.filter(field => selectedFields.has(field.name));
+
+                if (!chosenFields.length) {
+                    selectParts.push(`${alias}.*`);
+                    return;
+                }
+
+                chosenFields.forEach(field => {
+                    selectParts.push(`${alias}.${field.name}`);
+                });
+            });
+
+            const sql = [
+                'SELECT',
+                `    ${selectParts.join(',\\n    ')}`,
+                ...queryPlan.fromLines,
+                ';'
+            ].join('\\n');
+
+            qbState.generatedSQL = sql;
+            return sql;
+        }
+
+        function qbRefreshOutputs() {
+            const sqlOutput = document.getElementById('qbSqlOutput');
+            const warningContainer = document.getElementById('qbRelationshipWarning');
+            const sql = qbBuildSQL();
+            const queryPlan = qbBuildQueryPlan();
+
+            sqlOutput.textContent = sql || '-- Selecione pelo menos uma tabela para gerar o SQL.';
+
+            if (queryPlan.islands.length) {
+                warningContainer.style.display = 'block';
+                warningContainer.className = 'qb-warning';
+                warningContainer.textContent = `${queryPlan.islands.length} tabela(s) sem relacionamento com as demais serão adicionadas com CROSS JOIN: ${queryPlan.islands.join(', ')}.`;
+            } else if (qbState.selectedTables.length > 1 && !queryPlan.selectedJoins.length) {
+                warningContainer.style.display = 'block';
+                warningContainer.className = 'qb-info-box';
+                warningContainer.textContent = 'Há mais de uma tabela selecionada, mas nenhum JOIN marcado. O SQL usará apenas CROSS JOIN entre as tabelas desconectadas.';
+            } else {
+                warningContainer.style.display = 'none';
+                warningContainer.textContent = '';
+                warningContainer.className = '';
+            }
+
+            qbRenderDiagram(queryPlan);
+        }
+
+        function qbCopySQL() {
+            if (!qbState.generatedSQL) {
+                alert('Nenhum SQL gerado para copiar.');
+                return;
+            }
+
+            const fallbackCopy = () => {
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = qbState.generatedSQL;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+                alert('SQL copiado para a área de transferência.');
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(qbState.generatedSQL)
+                    .then(() => alert('SQL copiado para a área de transferência.'))
+                    .catch(() => fallbackCopy());
+            } else {
+                fallbackCopy();
+            }
+        }
+
+        function qbDownloadSQL() {
+            if (!qbState.generatedSQL) {
+                alert('Nenhum SQL gerado para baixar.');
+                return;
+            }
+
+            const blob = new Blob([qbState.generatedSQL + '\\n'], {type: 'text/sql;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'query_benner.sql';
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function qbClearAll() {
+            if (!confirm('Deseja limpar toda a seleção do construtor de query?')) {
+                return;
+            }
+
+            qbState.tableFilter = '';
+            qbState.selectedTables = [];
+            qbState.selectedFields = {};
+            qbState.availableJoins = [];
+            qbState.joinSelection = {};
+            qbState.generatedSQL = '';
+            qbState.joinType = 'INNER JOIN';
+
+            document.getElementById('qbTableFilter').value = '';
+            document.getElementById('qbJoinType').value = qbState.joinType;
+
+            qbRefreshSelection();
+        }
+
+        function qbMermaidSafeName(value) {
+            return String(value || '').replace(/[^A-Za-z0-9_]/g, '_');
+        }
+
+        function qbGetDiagramFields(tableName, joins) {
+            const table = TABLES[tableName];
+            if (!table) return [];
+
+            const highlightFields = new Set(['HANDLE']);
+            joins.forEach(join => {
+                if (join.source_table === tableName) {
+                    highlightFields.add(join.field);
+                }
+            });
+
+            const pickedFields = [];
+            const extras = [];
+            table.fields.forEach(field => {
+                if (highlightFields.has(field.name)) {
+                    pickedFields.push(field);
+                } else if (extras.length < 3) {
+                    extras.push(field);
+                }
+            });
+
+            return [...pickedFields, ...extras].slice(0, 6);
+        }
+
+        function qbBuildMermaidDefinition(joins) {
+            const lines = ['erDiagram'];
+
+            joins.forEach(join => {
+                lines.push(`    ${qbMermaidSafeName(join.source_table)} }o--|| ${qbMermaidSafeName(join.target_table)} : "${join.field}"`);
+            });
+
+            qbState.selectedTables.forEach(tableName => {
+                lines.push(`    ${qbMermaidSafeName(tableName)} {`);
+                qbGetDiagramFields(tableName, joins).forEach(field => {
+                    lines.push(`        ${qbMermaidSafeName(field.type || 'Unknown')} ${qbMermaidSafeName(field.name)}`);
+                });
+                lines.push('    }');
+            });
+
+            return lines.join('\\n');
+        }
+
+        function qbRenderDiagram(queryPlan) {
+            const container = document.getElementById('qbDiagram');
+            const meta = document.getElementById('qbDiagramMeta');
+            const joins = queryPlan ? queryPlan.selectedJoins : qbGetSelectedJoins();
+
+            if (!qbState.selectedTables.length) {
+                container.innerHTML = '<div class="empty-state">Selecione tabelas para visualizar o diagrama ER correspondente.</div>';
+                meta.textContent = '';
+                return;
+            }
+
+            const mermaidDefinition = qbBuildMermaidDefinition(joins);
+            meta.textContent = 'Renderização offline nativa em SVG. Se `window.mermaid` estiver disponível no navegador, o mesmo diagrama pode ser renderizado a partir da definição Mermaid equivalente.';
+
+            if (window.mermaid && typeof window.mermaid.render === 'function') {
+                try {
+                    const renderId = 'qb-mermaid-' + Date.now();
+                    const renderResult = window.mermaid.render(renderId, mermaidDefinition);
+
+                    if (renderResult && typeof renderResult.then === 'function') {
+                        renderResult.then(result => {
+                            container.innerHTML = result.svg || '';
+                        }).catch(() => {
+                            qbRenderFallbackDiagram(container, joins);
+                        });
+                        return;
+                    }
+
+                    if (renderResult && renderResult.svg) {
+                        container.innerHTML = renderResult.svg;
+                        return;
+                    }
+                } catch (error) {
+                    // Fallback below
+                }
+            }
+
+            qbRenderFallbackDiagram(container, joins);
+        }
+
+        function qbRenderFallbackDiagram(container, joins) {
+            const tables = qbState.selectedTables.slice();
+            const positions = {};
+            const tableWidth = 260;
+            const padding = 40;
+            const cols = Math.max(1, Math.ceil(Math.sqrt(tables.length)));
+            let currentRowHeights = [];
+
+            tables.forEach((tableName, index) => {
+                const col = index % cols;
+                const row = Math.floor(index / cols);
+                const fields = qbGetDiagramFields(tableName, joins);
+                const tableHeight = 56 + (fields.length * 18) + 20;
+
+                if (!currentRowHeights[row]) {
+                    currentRowHeights[row] = tableHeight;
+                } else {
+                    currentRowHeights[row] = Math.max(currentRowHeights[row], tableHeight);
+                }
+
+                positions[tableName] = {
+                    x: padding + col * (tableWidth + padding),
+                    row,
+                    height: tableHeight
+                };
+            });
+
+            let accumulatedY = padding;
+            Object.keys(positions).sort((a, b) => positions[a].row - positions[b].row).forEach(tableName => {
+                const position = positions[tableName];
+                let rowY = padding;
+                for (let rowIndex = 0; rowIndex < position.row; rowIndex++) {
+                    rowY += (currentRowHeights[rowIndex] || 0) + padding;
+                }
+                position.y = rowY;
+            });
+
+            const rows = Math.ceil(tables.length / cols);
+            const svgWidth = Math.max(420, (cols * (tableWidth + padding)) + padding);
+            const svgHeight = Math.max(260, currentRowHeights.slice(0, rows).reduce((sum, value) => sum + value, 0) + ((rows + 1) * padding));
+
+            const escapeSvg = qbEscapeHTML;
+            let svg = `<svg viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
+            svg += `
+                <defs>
+                    <marker id="qbArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
+                    </marker>
+                </defs>
+            `;
+
+            joins.forEach(join => {
+                const source = positions[join.source_table];
+                const target = positions[join.target_table];
+                if (!source || !target) return;
+
+                const startX = source.x + tableWidth;
+                const startY = source.y + (source.height / 2);
+                const endX = target.x;
+                const endY = target.y + (target.height / 2);
+                const controlX = (startX + endX) / 2;
+                const labelX = controlX;
+                const labelY = ((startY + endY) / 2) - 6;
+
+                svg += `<path d="M ${startX} ${startY} C ${controlX} ${startY}, ${controlX} ${endY}, ${endX} ${endY}" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#qbArrow)"></path>`;
+                svg += `<text x="${labelX}" y="${labelY}" font-size="11" fill="#475569" text-anchor="middle">${escapeSvg(join.field)}</text>`;
+            });
+
+            tables.forEach(tableName => {
+                const table = TABLES[tableName];
+                const position = positions[tableName];
+                const fields = qbGetDiagramFields(tableName, joins);
+                const tableHeight = position.height;
+                let textY = position.y + 48;
+
+                svg += `
+                    <g>
+                        <rect x="${position.x}" y="${position.y}" width="${tableWidth}" height="${tableHeight}" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"></rect>
+                        <rect x="${position.x}" y="${position.y}" width="${tableWidth}" height="34" rx="10" fill="#2563eb"></rect>
+                        <rect x="${position.x}" y="${position.y + 20}" width="${tableWidth}" height="14" fill="#2563eb"></rect>
+                        <text x="${position.x + 14}" y="${position.y + 22}" font-size="13" font-weight="700" fill="#ffffff">${escapeSvg(tableName)}</text>
+                        <text x="${position.x + 14}" y="${position.y + 40}" font-size="11" fill="#475569">${escapeSvg((table.module || '-') + ' • ' + fields.length + ' campo(s)')}</text>
+                `;
+
+                fields.forEach(field => {
+                    const prefix = field.name === 'HANDLE' ? 'PK ' : (field.fk_table ? 'FK ' : '');
+                    svg += `<text x="${position.x + 14}" y="${textY}" font-size="11" fill="#0f172a">${escapeSvg(prefix + field.name + ' : ' + (field.type || 'Unknown'))}</text>`;
+                    textY += 18;
+                });
+
+                svg += '</g>';
+            });
+
+            svg += '</svg>';
+            container.innerHTML = svg;
+        }
         
         function selectTable(tableName) {
             if (!TABLES[tableName]) {
@@ -922,6 +1949,7 @@ def generate_html(tables: dict, stats: dict, output_path: str):
                 return;
             }
             
+            qbState.visible = false;
             currentTable = tableName;
             const table = TABLES[tableName];
             
@@ -988,6 +2016,7 @@ def generate_html(tables: dict, stats: dict, output_path: str):
             // Show table detail
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('tableDetail').style.display = 'block';
+            document.getElementById('queryBuilderView').style.display = 'none';
             
             // Update table list
             renderTableList();
@@ -1146,9 +2175,11 @@ def generate_html(tables: dict, stats: dict, output_path: str):
         }
         
         function showDashboard() {
+            qbState.visible = false;
             currentTable = null;
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('tableDetail').style.display = 'none';
+            document.getElementById('queryBuilderView').style.display = 'none';
             renderTableList();
         }
         
