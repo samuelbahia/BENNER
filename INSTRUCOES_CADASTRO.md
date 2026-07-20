@@ -42,17 +42,25 @@ A planilha contém **118 operações**. A análise identificou:
    - Microsoft Internet Controls
    - Microsoft HTML Object Library
 
-### Passo 2: Análise Prévia
+### Passo 2: Etapa 1 - Análise Local
 1. Execute a macro `AnalisePreviaDuplicidades` (Alt+F8)
 2. Revise as colunas AC (ANÁLISE DUPLICIDADE) e AD (STATUS CADASTRO)
 3. Ajuste manualmente o STATUS para "NÃO CADASTRAR" nas linhas que não devem ser processadas
 
-### Passo 3: Cadastro
-1. Faça login no Benner Web antes de executar
-2. Execute a macro `CadastrarPastasBenner`
-3. Acompanhe o progresso na coluna AD (STATUS CADASTRO)
+### Passo 3: Etapa 2 - Pesquisa no Benner (Pastas > Parte Pasta)
+1. Faça login no Benner Web
+2. Execute a macro `VerificarNoBenner`
+3. O macro navegará automaticamente para Pastas, colará cada nome no campo "Parte Pasta" e pesquisará
+4. Resultados são registrados na coluna AG (PESQUISA BENNER)
+5. Participantes com pasta já existente com mesmo objeto terão STATUS alterado para "JÁ CADASTRADO NO BENNER"
 
-### Passo 4: Verificação
+### Passo 4: Etapa 3 - Cadastro
+1. Certifique-se de estar logado no Benner
+2. Execute a macro `CadastrarPastasBenner`
+3. O macro usará o fluxo: **+Novo > Cadastro rápido de pasta > Categoria Cível**
+4. Acompanhe o progresso na coluna AD (STATUS CADASTRO)
+
+### Passo 5: Verificação
 1. Execute `GerarRelatorioStatus` para ver resumo
 2. Verifique linhas com status "ERRO" e trate manualmente
 
