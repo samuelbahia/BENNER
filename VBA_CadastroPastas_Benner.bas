@@ -30,64 +30,63 @@ Private Const RITO As String = "Ordinário"
 Private Const TIPO_PROCESSO As String = "Ativo"
 
 ' === IDs dos campos ASP.NET (Mapa de Campos Benner) ===
-' Prefixo comum
-Private Const PFX As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_"
+' Prefixo: ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_
 
 ' Seção Pasta
-Private Const ID_FILIAL_SELECT As String = PFX & "ctl11_ctl01_select"
-Private Const ID_FILIAL_VALUE As String = PFX & "ctl11_FILIAL_VALUE"
-Private Const ID_GERENCIA_SELECT As String = PFX & "ctl22_ctl01_select"
-Private Const ID_GERENCIA_VALUE As String = PFX & "ctl22_DIVISAO_VALUE"
-Private Const ID_CAUSA_PEDIR_SELECT As String = PFX & "ctl34_ctl01_select"
-Private Const ID_CAUSA_PEDIR_VALUE As String = PFX & "ctl34_ASSUNTO_VALUE"
-Private Const ID_CAUSA_RAIZ_SELECT As String = PFX & "ctl43_ctl01_select"
-Private Const ID_CAUSA_RAIZ_VALUE As String = PFX & "ctl43_CAUSARAIZ_VALUE"
-Private Const ID_TIPO_PROCESSO_ATIVO As String = PFX & "GroupRadioButton_TIPOPROCESSO_1"
-Private Const ID_TIPO_PROCESSO_PASSIVO As String = PFX & "GroupRadioButton_TIPOPROCESSO_2"
+Private Const ID_FILIAL_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl11_ctl01_select"
+Private Const ID_FILIAL_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl11_FILIAL_VALUE"
+Private Const ID_GERENCIA_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl22_ctl01_select"
+Private Const ID_GERENCIA_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl22_DIVISAO_VALUE"
+Private Const ID_CAUSA_PEDIR_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl34_ctl01_select"
+Private Const ID_CAUSA_PEDIR_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl34_ASSUNTO_VALUE"
+Private Const ID_CAUSA_RAIZ_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl43_ctl01_select"
+Private Const ID_CAUSA_RAIZ_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl43_CAUSARAIZ_VALUE"
+Private Const ID_TIPO_PROCESSO_ATIVO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_GroupRadioButton_TIPOPROCESSO_1"
+Private Const ID_TIPO_PROCESSO_PASSIVO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_GroupRadioButton_TIPOPROCESSO_2"
 
 ' Seção Processo
-Private Const ID_PROCESSO_SELECT As String = PFX & "ctl79_ctl01_select"
-Private Const ID_PROCESSO_VALUE As String = PFX & "ctl79_DESDOBRAMENTO_VALUE"
-Private Const ID_RITO_SELECT As String = PFX & "ctl87_ctl01_select"
-Private Const ID_RITO_VALUE As String = PFX & "ctl87_RITO_VALUE"
-Private Const ID_ORGAO_SELECT As String = PFX & "ctl95_ctl01_select"
-Private Const ID_ORGAO_VALUE As String = PFX & "ctl95_ORGAO_VALUE"
-Private Const ID_UF_SELECT As String = PFX & "ctl99_ctl01_select"
-Private Const ID_UF_VALUE As String = PFX & "ctl99_UF_VALUE"
+Private Const ID_PROCESSO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl79_ctl01_select"
+Private Const ID_PROCESSO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl79_DESDOBRAMENTO_VALUE"
+Private Const ID_RITO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl87_ctl01_select"
+Private Const ID_RITO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl87_RITO_VALUE"
+Private Const ID_ORGAO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl95_ctl01_select"
+Private Const ID_ORGAO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl95_ORGAO_VALUE"
+Private Const ID_UF_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl99_ctl01_select"
+Private Const ID_UF_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl99_UF_VALUE"
 
 ' Distribuição
-Private Const ID_DATA_DISTRIBUICAO As String = PFX & "DISTRIBUIDO_1_DATADISTRIBUICAO_DATE"
-Private Const ID_TIPO_DOC_PROCESSO_SELECT As String = PFX & "DISTRIBUIDO_1_ctl10_ctl01_select"
-Private Const ID_TIPO_DOC_PROCESSO_VALUE As String = PFX & "DISTRIBUIDO_1_ctl10_TIPODOCUMENTO_VALUE"
+Private Const ID_DATA_DISTRIBUICAO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_DISTRIBUIDO_1_DATADISTRIBUICAO_DATE"
+Private Const ID_TIPO_DOC_PROCESSO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_DISTRIBUIDO_1_ctl10_ctl01_select"
+Private Const ID_TIPO_DOC_PROCESSO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_DISTRIBUIDO_1_ctl10_TIPODOCUMENTO_VALUE"
 
 ' Número único
-Private Const ID_NUMERO As String = PFX & "NUMEROUNICO_1_NUMERODISTRIBUICAO"
+Private Const ID_NUMERO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_NUMEROUNICO_1_NUMERODISTRIBUICAO"
 
 ' Andamentos
-Private Const ID_ANDAMENTO_SELECT As String = PFX & "ctl122_ctl01_select"
-Private Const ID_ANDAMENTO_VALUE As String = PFX & "ctl122_EVENTO1_VALUE"
-Private Const ID_DATA_ANDAMENTO As String = PFX & "DATAANDAMENTO1_DATE"
+Private Const ID_ANDAMENTO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl122_ctl01_select"
+Private Const ID_ANDAMENTO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl122_EVENTO1_VALUE"
+Private Const ID_DATA_ANDAMENTO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_DATAANDAMENTO1_DATE"
 
 ' Participantes
-Private Const ID_ADVERSO_NAO As String = PFX & "POSSUIPESSOAADVERSO_ctl03"
-Private Const ID_ADVERSO_SIM As String = PFX & "POSSUIPESSOAADVERSO_ctl05"
-Private Const ID_PARTICIPANTE1_SELECT As String = PFX & "POSSUIPESSOAADVERSO_2_ctl04_ctl01_select"
-Private Const ID_PARTICIPANTE1_VALUE As String = PFX & "POSSUIPESSOAADVERSO_2_ctl04_PARTICIPANTE1_VALUE"
-Private Const ID_CONDICAO1_SELECT As String = PFX & "POSSUIPESSOAADVERSO_2_ctl13_ctl01_select"
-Private Const ID_CONDICAO1_VALUE As String = PFX & "POSSUIPESSOAADVERSO_2_ctl13_CONDICAO1_VALUE"
-Private Const ID_ADV_INTERNO_SELECT As String = PFX & "ctl202_ctl01_select"
-Private Const ID_ADV_INTERNO_VALUE As String = PFX & "ctl202_ADVOGADOINTERNO_VALUE"
-Private Const ID_ADV_EXTERNO_SELECT As String = PFX & "ctl206_ctl01_select"
-Private Const ID_ADV_EXTERNO_VALUE As String = PFX & "ctl206_ADVOGADOEXTERNO_VALUE"
+Private Const ID_ADVERSO_NAO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_POSSUIPESSOAADVERSO_ctl03"
+Private Const ID_ADVERSO_SIM As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_POSSUIPESSOAADVERSO_ctl05"
+Private Const ID_PARTICIPANTE1_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_POSSUIPESSOAADVERSO_2_ctl04_ctl01_select"
+Private Const ID_PARTICIPANTE1_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_POSSUIPESSOAADVERSO_2_ctl04_PARTICIPANTE1_VALUE"
+Private Const ID_CONDICAO1_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_POSSUIPESSOAADVERSO_2_ctl13_ctl01_select"
+Private Const ID_CONDICAO1_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_POSSUIPESSOAADVERSO_2_ctl13_CONDICAO1_VALUE"
+Private Const ID_ADV_INTERNO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl202_ctl01_select"
+Private Const ID_ADV_INTERNO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl202_ADVOGADOINTERNO_VALUE"
+Private Const ID_ADV_EXTERNO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl206_ctl01_select"
+Private Const ID_ADV_EXTERNO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl206_ADVOGADOEXTERNO_VALUE"
 
 ' Pedidos
-Private Const ID_PEDIDO_SELECT As String = PFX & "ctl213_ctl01_select"
-Private Const ID_PEDIDO_VALUE As String = PFX & "ctl213_PEDIDO1_VALUE"
+Private Const ID_PEDIDO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl213_ctl01_select"
+Private Const ID_PEDIDO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl213_PEDIDO1_VALUE"
 
 ' Documentos (para limpar)
-Private Const ID_TIPO_DOC_ARQ_SELECT As String = PFX & "ctl256_ctl01_select"
-Private Const ID_TIPO_DOC_ARQ_VALUE As String = PFX & "ctl256_TIPODOCUMENTOARQUIVO1_VALUE"
-Private Const ID_NOME_ARQUIVO As String = PFX & "NOMEARQUIVO1"
+Private Const ID_TIPO_DOC_ARQ_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl256_ctl01_select"
+Private Const ID_TIPO_DOC_ARQ_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl256_TIPODOCUMENTOARQUIVO1_VALUE"
+Private Const ID_NOME_ARQUIVO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_NOMEARQUIVO1"
 
 ' Colunas da planilha
 Private Const COL_PLANO As Integer = 1         ' A - PLANO ATUAL
