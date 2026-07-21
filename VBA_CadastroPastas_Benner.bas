@@ -835,8 +835,8 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
     Dim tabelas As Object
     Set tabelas = doc.getElementsByTagName("TABLE")
     Dim t As Long, r As Long
-    Dim encontrou As Boolean, objetos As String, idPastaEncontrada As String
-    encontrou = False: objetos = "": idPastaEncontrada = ""
+    Dim encontrou As Boolean, objetos As String, idPastaEncontrada As String, nomePasta As String
+    encontrou = False: objetos = "": idPastaEncontrada = "": nomePasta = ""
 
     For t = 0 To tabelas.Length - 1
         Dim rows As Object
@@ -846,6 +846,14 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
             rowText = UCase(rows(r).innerText)
             If InStr(rowText, UCase(nomePesquisado)) > 0 Then
                 encontrou = True
+                ' Capturar valor do campo Pasta (primeiro link ou primeira célula)
+                If Len(nomePasta) = 0 Then
+                    Dim cells As Object
+                    Set cells = rows(r).getElementsByTagName("TD")
+                    If cells.Length > 0 Then
+                        nomePasta = Trim(cells(0).innerText)
+                    End If
+                End If
                 ' Tentar capturar ID da pasta via link
                 If Len(idPastaEncontrada) = 0 Then
                     Dim links As Object
@@ -872,9 +880,9 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
                 If InStr(rowText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(rowText, "DIVIDA PREVIDENCIARIA") > 0 Then
                     objetos = objetos & "DÍVIDA PREVIDENCIÁRIA; "
                 Else
-                    Dim cells As Object
-                    Set cells = rows(r).getElementsByTagName("TD")
-                    If cells.Length > 1 Then objetos = objetos & Left(cells(1).innerText, 50) & "; "
+                    Dim cellsObj As Object
+                    Set cellsObj = rows(r).getElementsByTagName("TD")
+                    If cellsObj.Length > 1 Then objetos = objetos & Left(cellsObj(1).innerText, 50) & "; "
                 End If
             End If
         Next r
@@ -888,13 +896,20 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
         sufixoId = ""
     End If
 
+    Dim prefixoPasta As String
+    If Len(nomePasta) > 0 Then
+        prefixoPasta = "[" & nomePasta & "] "
+    Else
+        prefixoPasta = ""
+    End If
+
     If encontrou Then
         If InStr(UCase(objetos), "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(UCase(objetos), "DIVIDA PREVIDENCIARIA") > 0 Then
-            LerResultadosPesquisa = "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)" & sufixoId
+            LerResultadosPesquisa = prefixoPasta & "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)" & sufixoId
         ElseIf Len(objetos) > 0 Then
-            LerResultadosPesquisa = "ENCONTRADA - OUTRO OBJETO: " & Left(objetos, 100) & sufixoId
+            LerResultadosPesquisa = prefixoPasta & "ENCONTRADA - OUTRO OBJETO: " & Left(objetos, 100) & sufixoId
         Else
-            LerResultadosPesquisa = "ENCONTRADA - objeto não identificado" & sufixoId
+            LerResultadosPesquisa = prefixoPasta & "ENCONTRADA - objeto não identificado" & sufixoId
         End If
     Else
         Dim bodyText As String

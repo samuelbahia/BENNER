@@ -726,6 +726,7 @@ class CadastroPastasBenner:
             encontrou = False
             objetos = ""
             id_pasta_encontrada = ""
+            nome_pasta = ""
 
             for table in tables:
                 try:
@@ -734,6 +735,11 @@ class CadastroPastasBenner:
                         row_text = tr.text.upper()
                         if nome_pesquisado.upper() in row_text:
                             encontrou = True
+                            # Capturar valor do campo Pasta (primeira célula)
+                            if not nome_pasta:
+                                cells = tr.find_elements(By.TAG_NAME, "td")
+                                if cells:
+                                    nome_pasta = cells[0].text.strip()
                             # Tentar capturar ID da pasta via link na linha
                             if not id_pasta_encontrada:
                                 links = tr.find_elements(By.TAG_NAME, "a")
@@ -753,14 +759,15 @@ class CadastroPastasBenner:
                     continue
 
             sufixo_id = f" | PASTA:{id_pasta_encontrada}" if id_pasta_encontrada else ""
+            prefixo_pasta = f"[{nome_pasta}] " if nome_pasta else ""
 
             if encontrou:
                 if "DÍVIDA PREVIDENCIÁRIA" in objetos.upper() or "DIVIDA PREVIDENCIARIA" in objetos.upper():
-                    return f"ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA){sufixo_id}"
+                    return f"{prefixo_pasta}ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA){sufixo_id}"
                 elif objetos:
-                    return f"ENCONTRADA - OUTRO OBJETO: {objetos[:100]}{sufixo_id}"
+                    return f"{prefixo_pasta}ENCONTRADA - OUTRO OBJETO: {objetos[:100]}{sufixo_id}"
                 else:
-                    return f"ENCONTRADA - objeto não identificado{sufixo_id}"
+                    return f"{prefixo_pasta}ENCONTRADA - objeto não identificado{sufixo_id}"
             else:
                 if "NENHUM REGISTRO" in body_text or "NÃO ENCONTR" in body_text:
                     return "NÃO ENCONTRADA - OK para cadastrar"
