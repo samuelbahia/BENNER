@@ -289,6 +289,10 @@ Public Sub CadastrarPastasBenner()
     Call AguardarCarregamento
     Randomize Timer
 
+    ' Mapa: mesmo participante -> mesmo escritório externo
+    Dim dictEscritorio As Object
+    Set dictEscritorio = CreateObject("Scripting.Dictionary")
+
     Dim cadastrados As Long, erros As Long
     cadastrados = 0: erros = 0
 
@@ -309,7 +313,16 @@ Public Sub CadastrarPastasBenner()
 
             Dim advInterno As String, advExterno As String
             advInterno = SortearAdvogadoInterno()
-            advExterno = SortearAdvogadoExterno()
+
+            ' Mesmo participante sempre com mesmo escritório
+            Dim nomeUpper As String
+            nomeUpper = UCase(nome)
+            If dictEscritorio.Exists(nomeUpper) Then
+                advExterno = dictEscritorio(nomeUpper)
+            Else
+                advExterno = SortearAdvogadoExterno()
+                dictEscritorio.Add nomeUpper, advExterno
+            End If
 
             Dim resultado As String
             resultado = CadastrarPastaCivel(nome, contrato, valorDivida, gerencia, _

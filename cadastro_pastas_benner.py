@@ -352,6 +352,9 @@ class CadastroPastasBenner:
         cadastrados = 0
         erros = 0
 
+        # Mesmo participante -> mesmo escritório externo
+        escritorio_por_participante: dict[str, str] = {}
+
         for row in pendentes:
             nome = str(ws.cell(row, COL_NOME).value or "").strip()
             contrato = str(ws.cell(row, COL_CONTRATO).value or "")
@@ -363,7 +366,12 @@ class CadastroPastasBenner:
             numero_cnj = f"DP{contrato}"
 
             adv_interno = random.choice(ADVOGADOS_INTERNOS)
-            adv_externo = random.choice(ADVOGADOS_EXTERNOS)
+            nome_upper = nome.upper()
+            if nome_upper in escritorio_por_participante:
+                adv_externo = escritorio_por_participante[nome_upper]
+            else:
+                adv_externo = random.choice(ADVOGADOS_EXTERNOS)
+                escritorio_por_participante[nome_upper] = adv_externo
 
             resultado = self._cadastrar_pasta_civel(
                 nome, contrato, valor_divida, gerencia, uf, cpf,
