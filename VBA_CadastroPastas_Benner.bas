@@ -49,6 +49,8 @@ Private Const CAUSA_RAIZ As String = "Produto"
 Private Const PROCESSO As String = "Cobrança"
 Private Const ANDAMENTO As String = "PEDIDO DE AJUIZAMENTO DE AÇÃO"
 Private Const PEDIDO As String = "Dívida Previdenciária"
+Private Const RITO As String = "Ordinário"
+Private Const TIPO_PROCESSO As String = "Ativo"
 
 ' Colunas da planilha
 Private Const COL_PLANO As Integer = 1         ' A - PLANO ATUAL
@@ -400,6 +402,13 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
 
     ' Processo: Cobrança
     Call PreencherCampoPorLabel(doc, "Processo", PROCESSO)
+
+    ' Rito: Ordinário
+    Call PreencherCampoPorLabel(doc, "Rito", RITO)
+
+    ' Tipo Processo: Ativo
+    Call PreencherCampoPorLabel(doc, "Tipo Processo", TIPO_PROCESSO)
+    Call PreencherCampoPorLabel(doc, "Tipo processo", TIPO_PROCESSO)
 
     ' Órgão: Tribunal de Justiça (conforme UF)
     Dim orgao As String
