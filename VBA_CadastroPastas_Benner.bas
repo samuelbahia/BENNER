@@ -2,35 +2,12 @@ Attribute VB_Name = "ModCadastroPastas"
 '==============================================================================
 ' MÓDULO VBA - CADASTRO DE PASTAS NO BENNER (PREVI JURÍDICO)
 '==============================================================================
-' Automatiza:
-' 1. Pesquisa prévia no Benner (Pastas > campo "Parte Pasta") para cada
-'    participante da planilha, identificando pastas já existentes.
-' 2. Cadastro via +Novo > Cadastro rápido de pasta (Categoria: Cível).
-' 3. Lançamento do andamento "PEDIDO DE AJUIZAMENTO DE AÇÃO".
+' Automatiza cadastro via +Novo > Cadastro rápido de pasta (Categoria: Cível)
+' Usa IDs exatos dos campos ASP.NET conforme Mapa de Campos.
 '
 ' URL: https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=MAIN
 '
-' CAMPOS DO CADASTRO RÁPIDO (após selecionar Cível):
-'   Filial: Plano de Benefícios 1 (col A planilha)
-'   Gerência: conforme col Q da planilha
-'   Tipo: Cobrança
-'   Causa de Pedir: Previdencial
-'   Causa Raiz: Produto
-'   Processo: Cobrança
-'   Órgão: Tribunal de Justiça conforme UF (col T)
-'   UF: conforme col T
-'   Já distribuído judicialmente: Não
-'   Data: hoje
-'   Tipo de documento: (excluir/limpar)
-'   Número: DP + contrato (col F)
-'   Andamento: PEDIDO DE AJUIZAMENTO DE AÇÃO
-'   Data andamento: hoje
-'   Participante adverso: Nome (col D) + CPF (col W), condição Réu
-'   Participante PREVI: condição Autor
-'   Advogado interno: aleatório
-'   Advogado externo: aleatório
-'   Pedido: Dívida Previdenciária
-'   Grid documentos: excluir linha com "inicial"
+' PREFIXO COMUM: ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_
 '
 ' REQUISITOS:
 ' - Microsoft Internet Controls (referência)
@@ -51,6 +28,66 @@ Private Const ANDAMENTO As String = "PEDIDO DE AJUIZAMENTO DE AÇÃO"
 Private Const PEDIDO As String = "Dívida Previdenciária"
 Private Const RITO As String = "Ordinário"
 Private Const TIPO_PROCESSO As String = "Ativo"
+
+' === IDs dos campos ASP.NET (Mapa de Campos Benner) ===
+' Prefixo comum
+Private Const PFX As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_"
+
+' Seção Pasta
+Private Const ID_FILIAL_SELECT As String = PFX & "ctl11_ctl01_select"
+Private Const ID_FILIAL_VALUE As String = PFX & "ctl11_FILIAL_VALUE"
+Private Const ID_GERENCIA_SELECT As String = PFX & "ctl22_ctl01_select"
+Private Const ID_GERENCIA_VALUE As String = PFX & "ctl22_DIVISAO_VALUE"
+Private Const ID_CAUSA_PEDIR_SELECT As String = PFX & "ctl34_ctl01_select"
+Private Const ID_CAUSA_PEDIR_VALUE As String = PFX & "ctl34_ASSUNTO_VALUE"
+Private Const ID_CAUSA_RAIZ_SELECT As String = PFX & "ctl43_ctl01_select"
+Private Const ID_CAUSA_RAIZ_VALUE As String = PFX & "ctl43_CAUSARAIZ_VALUE"
+Private Const ID_TIPO_PROCESSO_ATIVO As String = PFX & "GroupRadioButton_TIPOPROCESSO_1"
+Private Const ID_TIPO_PROCESSO_PASSIVO As String = PFX & "GroupRadioButton_TIPOPROCESSO_2"
+
+' Seção Processo
+Private Const ID_PROCESSO_SELECT As String = PFX & "ctl79_ctl01_select"
+Private Const ID_PROCESSO_VALUE As String = PFX & "ctl79_DESDOBRAMENTO_VALUE"
+Private Const ID_RITO_SELECT As String = PFX & "ctl87_ctl01_select"
+Private Const ID_RITO_VALUE As String = PFX & "ctl87_RITO_VALUE"
+Private Const ID_ORGAO_SELECT As String = PFX & "ctl95_ctl01_select"
+Private Const ID_ORGAO_VALUE As String = PFX & "ctl95_ORGAO_VALUE"
+Private Const ID_UF_SELECT As String = PFX & "ctl99_ctl01_select"
+Private Const ID_UF_VALUE As String = PFX & "ctl99_UF_VALUE"
+
+' Distribuição
+Private Const ID_DATA_DISTRIBUICAO As String = PFX & "DISTRIBUIDO_1_DATADISTRIBUICAO_DATE"
+Private Const ID_TIPO_DOC_PROCESSO_SELECT As String = PFX & "DISTRIBUIDO_1_ctl10_ctl01_select"
+Private Const ID_TIPO_DOC_PROCESSO_VALUE As String = PFX & "DISTRIBUIDO_1_ctl10_TIPODOCUMENTO_VALUE"
+
+' Número único
+Private Const ID_NUMERO As String = PFX & "NUMEROUNICO_1_NUMERODISTRIBUICAO"
+
+' Andamentos
+Private Const ID_ANDAMENTO_SELECT As String = PFX & "ctl122_ctl01_select"
+Private Const ID_ANDAMENTO_VALUE As String = PFX & "ctl122_EVENTO1_VALUE"
+Private Const ID_DATA_ANDAMENTO As String = PFX & "DATAANDAMENTO1_DATE"
+
+' Participantes
+Private Const ID_ADVERSO_NAO As String = PFX & "POSSUIPESSOAADVERSO_ctl03"
+Private Const ID_ADVERSO_SIM As String = PFX & "POSSUIPESSOAADVERSO_ctl05"
+Private Const ID_PARTICIPANTE1_SELECT As String = PFX & "POSSUIPESSOAADVERSO_2_ctl04_ctl01_select"
+Private Const ID_PARTICIPANTE1_VALUE As String = PFX & "POSSUIPESSOAADVERSO_2_ctl04_PARTICIPANTE1_VALUE"
+Private Const ID_CONDICAO1_SELECT As String = PFX & "POSSUIPESSOAADVERSO_2_ctl13_ctl01_select"
+Private Const ID_CONDICAO1_VALUE As String = PFX & "POSSUIPESSOAADVERSO_2_ctl13_CONDICAO1_VALUE"
+Private Const ID_ADV_INTERNO_SELECT As String = PFX & "ctl202_ctl01_select"
+Private Const ID_ADV_INTERNO_VALUE As String = PFX & "ctl202_ADVOGADOINTERNO_VALUE"
+Private Const ID_ADV_EXTERNO_SELECT As String = PFX & "ctl206_ctl01_select"
+Private Const ID_ADV_EXTERNO_VALUE As String = PFX & "ctl206_ADVOGADOEXTERNO_VALUE"
+
+' Pedidos
+Private Const ID_PEDIDO_SELECT As String = PFX & "ctl213_ctl01_select"
+Private Const ID_PEDIDO_VALUE As String = PFX & "ctl213_PEDIDO1_VALUE"
+
+' Documentos (para limpar)
+Private Const ID_TIPO_DOC_ARQ_SELECT As String = PFX & "ctl256_ctl01_select"
+Private Const ID_TIPO_DOC_ARQ_VALUE As String = PFX & "ctl256_TIPODOCUMENTOARQUIVO1_VALUE"
+Private Const ID_NOME_ARQUIVO As String = PFX & "NOMEARQUIVO1"
 
 ' Colunas da planilha
 Private Const COL_PLANO As Integer = 1         ' A - PLANO ATUAL
@@ -93,10 +130,8 @@ Public Sub AnalisePreviaDuplicidades()
     Dim lastRow As Long
     lastRow = wsData.Cells(wsData.Rows.Count, COL_NOME).End(xlUp).Row
 
-    ' Limpar colunas de análise
     wsData.Range(wsData.Cells(2, COL_ANALISE), wsData.Cells(lastRow, COL_ID_PASTA)).ClearContents
 
-    ' Headers
     wsData.Cells(1, COL_ANALISE).Value = "ANÁLISE DUPLICIDADE"
     wsData.Cells(1, COL_STATUS).Value = "STATUS CADASTRO"
     wsData.Cells(1, COL_CNJ).Value = "NÚMERO CNJ"
@@ -104,7 +139,6 @@ Public Sub AnalisePreviaDuplicidades()
     wsData.Cells(1, COL_PESQUISA_BENNER).Value = "PESQUISA BENNER"
     wsData.Cells(1, COL_ID_PASTA).Value = "ID PASTA BENNER"
 
-    ' Contar nomes
     Dim dictNomes As Object
     Set dictNomes = CreateObject("Scripting.Dictionary")
     Dim i As Long, nome As String
@@ -117,7 +151,6 @@ Public Sub AnalisePreviaDuplicidades()
         End If
     Next i
 
-    ' Detectar duplicatas exatas e marcar
     Dim dictExatas As Object
     Set dictExatas = CreateObject("Scripting.Dictionary")
     Dim contrato As String, valor As Double, chave As String
@@ -128,16 +161,13 @@ Public Sub AnalisePreviaDuplicidades()
         valor = CDbl(wsData.Cells(i, COL_VALOR_DIVIDA).Value)
         chave = nome & "|" & contrato & "|" & CStr(valor)
 
-        ' Gerar número CNJ
         wsData.Cells(i, COL_CNJ).Value = "DP" & contrato
 
-        ' Mapear plano
         Select Case wsData.Cells(i, COL_PLANO).Value
             Case 1: wsData.Cells(i, COL_PLANO_DESC).Value = "Plano de Benefícios 1"
             Case 2: wsData.Cells(i, COL_PLANO_DESC).Value = "Plano PREVI Futuro"
         End Select
 
-        ' Classificar
         If dictExatas.Exists(chave) Then
             wsData.Cells(i, COL_ANALISE).Value = "DUPLICATA EXATA - REMOVER"
             wsData.Cells(i, COL_STATUS).Value = "NÃO CADASTRAR"
@@ -150,7 +180,6 @@ Public Sub AnalisePreviaDuplicidades()
         End If
         dictExatas(chave) = i
 
-        ' Verificar coluna Benner existente
         If Len(Trim(CStr(wsData.Cells(i, COL_BENNER).Value))) > 0 Then
             wsData.Cells(i, COL_ANALISE).Value = wsData.Cells(i, COL_ANALISE).Value & _
                 " | JÁ NO BENNER (" & wsData.Cells(i, COL_BENNER).Value & ")"
@@ -160,12 +189,10 @@ Public Sub AnalisePreviaDuplicidades()
 
     wsData.Columns(COL_ANALISE).EntireColumn.AutoFit
     wsData.Columns(COL_STATUS).EntireColumn.AutoFit
-    wsData.Columns(COL_ID_PASTA).EntireColumn.AutoFit
 
-    MsgBox "Etapa 1 concluída - Análise local." & vbCrLf & vbCrLf & _
+    MsgBox "Etapa 1 concluída - Análise local." & vbCrLf & _
            "Total: " & (lastRow - 1) & " operações." & vbCrLf & _
-           "Próximo passo: Execute 'VerificarNoBenner' para pesquisar " & _
-           "pastas existentes online.", vbInformation, "Análise Prévia"
+           "Próximo: Execute 'VerificarNoBenner'.", vbInformation, "Análise Prévia"
 End Sub
 
 '==============================================================================
@@ -179,36 +206,29 @@ Public Sub VerificarNoBenner()
     lastRow = wsData.Cells(wsData.Rows.Count, COL_NOME).End(xlUp).Row
 
     If wsData.Cells(1, COL_STATUS).Value <> "STATUS CADASTRO" Then
-        MsgBox "Execute primeiro a Etapa 1 (AnalisePreviaDuplicidades)!", vbExclamation
+        MsgBox "Execute primeiro a Etapa 1!", vbExclamation
         Exit Sub
     End If
 
-    Dim resp As VbMsgBoxResult
-    resp = MsgBox("Pesquisará cada participante no Benner (Pastas > Parte Pasta)." & vbCrLf & _
-                  "Certifique-se de estar LOGADO no sistema." & vbCrLf & _
-                  "Deseja continuar?", vbYesNo + vbQuestion, "Pesquisa no Benner")
-    If resp = vbNo Then Exit Sub
+    If MsgBox("Pesquisará cada participante no Benner (Pastas > Parte Pasta)." & vbCrLf & _
+              "Certifique-se de estar LOGADO. Continuar?", vbYesNo + vbQuestion, "Pesquisa") = vbNo Then Exit Sub
 
     If Not InicializarNavegador() Then Exit Sub
-
     IE.navigate URL_PASTAS
     Call AguardarCarregamento
 
     Dim pesquisados As Long, jaExistentes As Long
     pesquisados = 0: jaExistentes = 0
-
     Dim i As Long, nome As String, statusAtual As String
 
     For i = 2 To lastRow
         statusAtual = UCase(Trim(CStr(wsData.Cells(i, COL_STATUS).Value)))
-
         If statusAtual = "PENDENTE" Or statusAtual = "VERIFICAR" Then
             nome = Trim(CStr(wsData.Cells(i, COL_NOME).Value))
             If Len(nome) = 0 Then GoTo ProximaLinha
 
             Dim resultadoPesquisa As String
             resultadoPesquisa = PesquisarPartePasta(nome)
-
             wsData.Cells(i, COL_PESQUISA_BENNER).Value = resultadoPesquisa
             pesquisados = pesquisados + 1
 
@@ -218,13 +238,10 @@ Public Sub VerificarNoBenner()
                     wsData.Cells(i, COL_STATUS).Value = "JÁ CADASTRADO NO BENNER"
                     jaExistentes = jaExistentes + 1
                 Else
-                    wsData.Cells(i, COL_ANALISE).Value = wsData.Cells(i, COL_ANALISE).Value & _
-                        " | PASTA EXISTENTE OUTRO OBJETO"
+                    wsData.Cells(i, COL_ANALISE).Value = wsData.Cells(i, COL_ANALISE).Value & " | PASTA EXISTENTE OUTRO OBJETO"
                 End If
             ElseIf InStr(UCase(resultadoPesquisa), "NÃO ENCONTRADA") > 0 Then
-                If statusAtual = "VERIFICAR" Then
-                    wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
-                End If
+                If statusAtual = "VERIFICAR" Then wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
             End If
 
             Application.Wait Now + TimeValue("00:00:02")
@@ -234,10 +251,8 @@ ProximaLinha:
     Next i
 
     Application.StatusBar = False
-    MsgBox "Etapa 2 concluída." & vbCrLf & _
-           "Pesquisados: " & pesquisados & vbCrLf & _
-           "Já existentes: " & jaExistentes & vbCrLf & vbCrLf & _
-           "Próximo: Execute 'CadastrarPastasBenner'.", vbInformation, "Pesquisa Concluída"
+    MsgBox "Etapa 2 concluída. Pesquisados: " & pesquisados & _
+           ", Já existentes: " & jaExistentes, vbInformation, "Pesquisa Concluída"
 End Sub
 
 '==============================================================================
@@ -255,7 +270,6 @@ Public Sub CadastrarPastasBenner()
         Exit Sub
     End If
 
-    ' Contar pendentes
     Dim totalPendentes As Long, i As Long
     For i = 2 To lastRow
         If UCase(Trim(CStr(wsData.Cells(i, COL_STATUS).Value))) = "PENDENTE" Then
@@ -268,18 +282,12 @@ Public Sub CadastrarPastasBenner()
         Exit Sub
     End If
 
-    Dim resp As VbMsgBoxResult
-    resp = MsgBox("Serão cadastradas " & totalPendentes & " pastas." & vbCrLf & _
-                  "+Novo > Cadastro rápido > Cível" & vbCrLf & _
-                  "Certifique-se de estar LOGADO." & vbCrLf & _
-                  "Continuar?", vbYesNo + vbQuestion, "Cadastro de Pastas")
-    If resp = vbNo Then Exit Sub
+    If MsgBox("Cadastrar " & totalPendentes & " pastas? (+Novo > Cadastro rápido > Cível)" & vbCrLf & _
+              "Certifique-se de estar LOGADO.", vbYesNo + vbQuestion, "Cadastro") = vbNo Then Exit Sub
 
     If Not InicializarNavegador() Then Exit Sub
     IE.navigate URL_BENNER
     Call AguardarCarregamento
-
-    ' Inicializar randomização
     Randomize Timer
 
     Dim cadastrados As Long, erros As Long
@@ -300,19 +308,16 @@ Public Sub CadastrarPastasBenner()
             filial = CStr(wsData.Cells(i, COL_PLANO_DESC).Value)
             numeroCNJ = "DP" & contrato
 
-            ' Selecionar advogados aleatórios
             Dim advInterno As String, advExterno As String
             advInterno = SortearAdvogadoInterno()
             advExterno = SortearAdvogadoExterno()
 
-            ' Cadastrar
             Dim resultado As String
             resultado = CadastrarPastaCivel(nome, contrato, valorDivida, gerencia, _
                                             uf, cpf, filial, numeroCNJ, advInterno, advExterno)
 
             If Left(resultado, 2) = "OK" Then
                 wsData.Cells(i, COL_STATUS).Value = "CADASTRADO + ANDAMENTO"
-                ' Extrair ID da pasta se retornado
                 If Len(resultado) > 3 Then
                     wsData.Cells(i, COL_ID_PASTA).Value = Mid(resultado, 4)
                 End If
@@ -328,13 +333,11 @@ Public Sub CadastrarPastasBenner()
     Next i
 
     Application.StatusBar = False
-    MsgBox "Cadastro concluído!" & vbCrLf & _
-           "Sucesso: " & cadastrados & vbCrLf & _
-           "Erros: " & erros, vbInformation, "Resultado"
+    MsgBox "Concluído! Sucesso: " & cadastrados & ", Erros: " & erros, vbInformation, "Resultado"
 End Sub
 
 '==============================================================================
-' FUNÇÃO - CADASTRAR PASTA CÍVEL (FORMULÁRIO COMPLETO)
+' FUNÇÃO PRINCIPAL - CADASTRAR PASTA CÍVEL (IDs exatos)
 '==============================================================================
 Private Function CadastrarPastaCivel(nome As String, contrato As String, _
                                       valorDivida As Double, gerencia As String, _
@@ -350,7 +353,6 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
     Set btnNovo = BuscarElementoPorTexto(doc, "A", "+Novo")
     If btnNovo Is Nothing Then Set btnNovo = BuscarElementoPorTexto(doc, "SPAN", "Novo")
     If btnNovo Is Nothing Then Set btnNovo = BuscarElementoPorTexto(doc, "BUTTON", "Novo")
-    If btnNovo Is Nothing Then Set btnNovo = BuscarElementoPorClasse(doc, "btn-novo")
 
     If Not btnNovo Is Nothing Then
         btnNovo.Click
@@ -363,9 +365,7 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
     Set doc = IE.document
     Dim linkCadRapido As Object
     Set linkCadRapido = BuscarElementoPorTexto(doc, "A", "Cadastro rápido de pasta")
-    If linkCadRapido Is Nothing Then
-        Set linkCadRapido = BuscarElementoPorTexto(doc, "SPAN", "Cadastro rápido")
-    End If
+    If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "SPAN", "Cadastro rápido")
 
     If Not linkCadRapido Is Nothing Then
         linkCadRapido.Click
@@ -378,90 +378,80 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
     ' === PASSO 2: Selecionar Categoria Cível ===
     Set doc = IE.document
     Call PreencherCampoPorLabel(doc, "Categoria", CATEGORIA)
-    Call AguardarCarregamento ' aguarda tela recarregar após seleção
+    Call AguardarCarregamento
 
-    ' === PASSO 3: Preencher campos do formulário Cível ===
+    ' === PASSO 3: Preencher campos com IDs exatos ===
     Set doc = IE.document
 
-    ' Filial: Plano de Benefícios 1
-    Call PreencherCampoPorLabel(doc, "Filial", filial)
+    ' Filial (lookup: select + hidden value)
+    Call SelecionarLookup(doc, ID_FILIAL_SELECT, ID_FILIAL_VALUE, filial)
 
-    ' Gerência: conforme planilha
-    Call PreencherCampoPorLabel(doc, "Gerência", gerencia)
-    Call PreencherCampoPorLabel(doc, "Ger" & Chr(234) & "ncia", gerencia)
+    ' Gerência (lookup)
+    Call SelecionarLookup(doc, ID_GERENCIA_SELECT, ID_GERENCIA_VALUE, gerencia)
 
-    ' Tipo: Cobrança
-    Call PreencherCampoPorLabel(doc, "Tipo", TIPO_PASTA)
+    ' Causa de Pedir (lookup)
+    Call SelecionarLookup(doc, ID_CAUSA_PEDIR_SELECT, ID_CAUSA_PEDIR_VALUE, CAUSA_PEDIR)
 
-    ' Causa de Pedir: Previdencial
-    Call PreencherCampoPorLabel(doc, "Causa de Pedir", CAUSA_PEDIR)
-    Call PreencherCampoPorLabel(doc, "Causa Pedir", CAUSA_PEDIR)
+    ' Causa Raiz (lookup)
+    Call SelecionarLookup(doc, ID_CAUSA_RAIZ_SELECT, ID_CAUSA_RAIZ_VALUE, CAUSA_RAIZ)
 
-    ' Causa Raiz: Produto
-    Call PreencherCampoPorLabel(doc, "Causa Raiz", CAUSA_RAIZ)
+    ' Tipo Processo: Ativo (radio button)
+    Call ClicarRadio(doc, ID_TIPO_PROCESSO_ATIVO)
 
-    ' Processo: Cobrança
-    Call PreencherCampoPorLabel(doc, "Processo", PROCESSO)
+    ' Processo (lookup)
+    Call SelecionarLookup(doc, ID_PROCESSO_SELECT, ID_PROCESSO_VALUE, PROCESSO)
 
-    ' Rito: Ordinário
-    Call PreencherCampoPorLabel(doc, "Rito", RITO)
+    ' Rito (lookup)
+    Call SelecionarLookup(doc, ID_RITO_SELECT, ID_RITO_VALUE, RITO)
 
-    ' Tipo Processo: Ativo
-    Call PreencherCampoPorLabel(doc, "Tipo Processo", TIPO_PROCESSO)
-    Call PreencherCampoPorLabel(doc, "Tipo processo", TIPO_PROCESSO)
+    ' Órgão (lookup) - Tribunal de Justiça
+    Call SelecionarLookup(doc, ID_ORGAO_SELECT, ID_ORGAO_VALUE, "Tribunal de Justiça")
 
-    ' Órgão: Tribunal de Justiça (conforme UF)
-    Dim orgao As String
-    orgao = "Tribunal de Justiça"
-    Call PreencherCampoPorLabel(doc, "Órgão", orgao)
-    Call PreencherCampoPorLabel(doc, "Orgão", orgao)
+    ' UF (lookup)
+    Call SelecionarLookup(doc, ID_UF_SELECT, ID_UF_VALUE, uf)
 
-    ' UF
-    Call PreencherCampoPorLabel(doc, "UF", uf)
-
-    ' Já distribuído judicialmente: Não
-    Call PreencherCampoPorLabel(doc, "distribuído", "Não")
-    Call PreencherCampoPorLabel(doc, "distribu", "Não")
-
-    ' Data: hoje
+    ' Data distribuição: hoje
     Dim dataHoje As String
     dataHoje = Format(Date, "dd/mm/yyyy")
-    Call PreencherCampoPorLabel(doc, "Data", dataHoje)
+    Call PreencherTexto(doc, ID_DATA_DISTRIBUICAO, dataHoje)
 
     ' Número: DP + contrato
-    Call PreencherCampoPorLabel(doc, "Número", numeroCNJ)
-    Call PreencherCampoPorLabel(doc, "Numero", numeroCNJ)
+    Call PreencherTexto(doc, ID_NUMERO, numeroCNJ)
 
-    ' Andamento: PEDIDO DE AJUIZAMENTO DE AÇÃO
-    Call PreencherCampoPorLabel(doc, "Andamento", ANDAMENTO)
+    ' Andamento (lookup)
+    Call SelecionarLookup(doc, ID_ANDAMENTO_SELECT, ID_ANDAMENTO_VALUE, ANDAMENTO)
 
     ' Data andamento: hoje
-    Call PreencherCampoPorLabel(doc, "Data andamento", dataHoje)
-    Call PreencherCampoPorLabel(doc, "Data Andamento", dataHoje)
+    Call PreencherTexto(doc, ID_DATA_ANDAMENTO, dataHoje)
 
-    ' === PASSO 4: Participante adverso (réu) ===
-    ' Pesquisar se já cadastrado, senão cadastrar com Nome + CPF
-    Call CadastrarParticipante(doc, nome, cpf, "Réu")
+    ' === PASSO 4: Participantes ===
+    ' Adverso já cadastrado: Sim (pesquisar)
+    Call ClicarRadio(doc, ID_ADVERSO_SIM)
+    Application.Wait Now + TimeValue("00:00:01")
+    Set doc = IE.document
 
-    ' === PASSO 5: Participante PREVI (autor) ===
-    Call AdicionarParticipantePrevi(doc, "Autor")
+    ' Participante 1 (adverso/réu)
+    Call SelecionarLookup(doc, ID_PARTICIPANTE1_SELECT, ID_PARTICIPANTE1_VALUE, nome)
 
-    ' === PASSO 6: Advogado interno (aleatório) ===
-    Call PreencherCampoPorLabel(doc, "Advogado Interno", advInterno)
-    Call PreencherCampoPorLabel(doc, "Advogado interno", advInterno)
+    ' Condição 1: Réu
+    Call SelecionarLookup(doc, ID_CONDICAO1_SELECT, ID_CONDICAO1_VALUE, "Réu")
 
-    ' === PASSO 7: Advogado externo (aleatório) ===
-    Call PreencherCampoPorLabel(doc, "Advogado Externo", advExterno)
-    Call PreencherCampoPorLabel(doc, "Advogado externo", advExterno)
-    Call PreencherCampoPorLabel(doc, "Escritório", advExterno)
+    ' Advogado interno (aleatório)
+    Call SelecionarLookup(doc, ID_ADV_INTERNO_SELECT, ID_ADV_INTERNO_VALUE, advInterno)
 
-    ' === PASSO 8: Pedido ===
-    Call PreencherCampoPorLabel(doc, "Pedido", PEDIDO)
+    ' Advogado externo (aleatório)
+    Call SelecionarLookup(doc, ID_ADV_EXTERNO_SELECT, ID_ADV_EXTERNO_VALUE, advExterno)
 
-    ' === PASSO 9: Limpar grid documentos (excluir tipo documento e "inicial") ===
-    Call ExcluirDocumentoInicial(doc)
+    ' === PASSO 5: Pedido ===
+    Call SelecionarLookup(doc, ID_PEDIDO_SELECT, ID_PEDIDO_VALUE, PEDIDO)
 
-    ' === PASSO 10: Salvar ===
+    ' === PASSO 6: Documentos - Limpar tipo documento e nome "INICIAL" ===
+    Call LimparCampo(doc, ID_TIPO_DOC_ARQ_VALUE)
+    Call LimparCampo(doc, ID_NOME_ARQUIVO)
+    ' Também limpar o select visível
+    Call LimparSelect(doc, ID_TIPO_DOC_ARQ_SELECT)
+
+    ' === PASSO 7: Salvar ===
     Set doc = IE.document
     Dim btnSalvar As Object
     Set btnSalvar = BuscarElementoPorTexto(doc, "A", "Salvar")
@@ -476,7 +466,7 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
         Exit Function
     End If
 
-    ' === PASSO 11: Capturar ID da pasta criada ===
+    ' === PASSO 8: Capturar ID da pasta ===
     Dim idPasta As String
     idPasta = CapturarIdPasta()
 
@@ -492,154 +482,83 @@ ErrHandler:
 End Function
 
 '==============================================================================
-' SUB - CADASTRAR PARTICIPANTE (ADVERSO/RÉU)
+' FUNÇÕES DE PREENCHIMENTO POR ID EXATO
 '==============================================================================
-Private Sub CadastrarParticipante(doc As Object, nome As String, cpf As String, condicao As String)
+Private Sub SelecionarLookup(doc As Object, idSelect As String, idValue As String, texto As String)
+    ' Campos lookup do Benner têm um select visível e um hidden _VALUE.
+    ' Preenche o select buscando a opção pelo texto, e seta o _VALUE.
     On Error Resume Next
 
-    ' Tentar pesquisar participante existente
-    Dim campoParticipante As Object
-    Set campoParticipante = BuscarCampoPorLabel(doc, "Participante")
-    If campoParticipante Is Nothing Then
-        Set campoParticipante = BuscarCampoPorLabel(doc, "Parte")
-    End If
+    Dim selectElem As Object
+    Set selectElem = doc.getElementById(idSelect)
 
-    If Not campoParticipante Is Nothing Then
-        ' Preencher com nome para busca
-        campoParticipante.Value = nome
-        campoParticipante.Focus
-        Call FireEvent(campoParticipante, "change")
-        Call FireEvent(campoParticipante, "input")
-        Application.Wait Now + TimeValue("00:00:02")
+    If Not selectElem Is Nothing Then
+        ' Buscar opção pelo texto
+        Dim opts As Object
+        Set opts = selectElem.getElementsByTagName("OPTION")
+        Dim j As Long
+        For j = 0 To opts.Length - 1
+            If InStr(1, opts(j).innerText, texto, vbTextCompare) > 0 Then
+                selectElem.selectedIndex = j
+                Call FireEvent(selectElem, "change")
 
-        ' Verificar se apareceu sugestão/autocomplete
-        Set doc = IE.document
-        Dim sugestao As Object
-        Set sugestao = BuscarElementoPorTexto(doc, "LI", nome)
-        If sugestao Is Nothing Then
-            Set sugestao = BuscarElementoPorTexto(doc, "DIV", nome)
-        End If
-
-        If Not sugestao Is Nothing Then
-            ' Participante já cadastrado - selecionar
-            sugestao.Click
-            Call AguardarCarregamento
-        Else
-            ' Participante não cadastrado - preencher dados
-            Call PreencherCampoPorLabel(doc, "Nome", nome)
-            Call PreencherCampoPorLabel(doc, "CPF", cpf)
-        End If
-    End If
-
-    ' Condição: Réu
-    Call PreencherCampoPorLabel(doc, "Condição", condicao)
-    Call PreencherCampoPorLabel(doc, "Condi", condicao)
-
-    On Error GoTo 0
-End Sub
-
-'==============================================================================
-' SUB - ADICIONAR PREVI COMO PARTICIPANTE AUTOR
-'==============================================================================
-Private Sub AdicionarParticipantePrevi(doc As Object, condicao As String)
-    On Error Resume Next
-
-    ' Buscar campo para adicionar segundo participante (PREVI)
-    ' Pesquisar PREVI no campo participante
-    Dim campoParte As Object
-    Set campoParte = BuscarCampoPorLabel(doc, "Participante")
-    If campoParte Is Nothing Then
-        Set campoParte = BuscarCampoPorLabel(doc, "Autor")
-    End If
-
-    If Not campoParte Is Nothing Then
-        campoParte.Value = "PREVI"
-        campoParte.Focus
-        Call FireEvent(campoParte, "change")
-        Call FireEvent(campoParte, "input")
-        Application.Wait Now + TimeValue("00:00:02")
-
-        ' Selecionar PREVI na sugestão
-        Set doc = IE.document
-        Dim sugestao As Object
-        Set sugestao = BuscarElementoPorTexto(doc, "LI", "PREVI")
-        If sugestao Is Nothing Then
-            Set sugestao = BuscarElementoPorTexto(doc, "DIV", "PREVI")
-        End If
-
-        If Not sugestao Is Nothing Then
-            sugestao.Click
-            Call AguardarCarregamento
-        End If
-    End If
-
-    ' Condição: Autor
-    Call PreencherCampoPorLabel(doc, "Condição", condicao)
-    Call PreencherCampoPorLabel(doc, "Condi", condicao)
-
-    On Error GoTo 0
-End Sub
-
-'==============================================================================
-' SUB - EXCLUIR DOCUMENTO "INICIAL" DA GRID
-'==============================================================================
-Private Sub ExcluirDocumentoInicial(doc As Object)
-    On Error Resume Next
-
-    ' Localizar grid de documentos e excluir a linha com "inicial"
-    Dim tabelas As Object
-    Set tabelas = doc.getElementsByTagName("TABLE")
-
-    Dim t As Long, r As Long
-    For t = 0 To tabelas.Length - 1
-        Dim rows As Object
-        Set rows = tabelas(t).getElementsByTagName("TR")
-        For r = 0 To rows.Length - 1
-            Dim rowText As String
-            rowText = LCase(rows(r).innerText)
-            If InStr(rowText, "inicial") > 0 And InStr(rowText, "documento") > 0 Then
-                ' Encontrou linha com "inicial" - buscar botão excluir
-                Dim btns As Object
-                Set btns = rows(r).getElementsByTagName("A")
-                Dim b As Long
-                For b = 0 To btns.Length - 1
-                    If InStr(1, btns(b).innerText, "Exclu", vbTextCompare) > 0 Or _
-                       InStr(1, btns(b).getAttribute("title"), "Exclu", vbTextCompare) > 0 Or _
-                       InStr(1, btns(b).getAttribute("class"), "delete", vbTextCompare) > 0 Then
-                        btns(b).Click
-                        Application.Wait Now + TimeValue("00:00:01")
-                        Exit For
-                    End If
-                Next b
-
-                ' Tentar ícone de delete
-                Set btns = rows(r).getElementsByTagName("BUTTON")
-                For b = 0 To btns.Length - 1
-                    If InStr(1, btns(b).getAttribute("title"), "Exclu", vbTextCompare) > 0 Or _
-                       InStr(1, btns(b).getAttribute("class"), "delete", vbTextCompare) > 0 Then
-                        btns(b).Click
-                        Application.Wait Now + TimeValue("00:00:01")
-                        Exit For
-                    End If
-                Next b
+                ' Setar o hidden value
+                Dim hiddenElem As Object
+                Set hiddenElem = doc.getElementById(idValue)
+                If Not hiddenElem Is Nothing Then
+                    hiddenElem.Value = opts(j).Value
+                End If
                 Exit For
             End If
-        Next r
-    Next t
-
-    ' Limpar campo "Tipo Documento" e "Nome" se existirem como inputs
-    Dim campoTipoDoc As Object
-    Set campoTipoDoc = BuscarCampoPorLabel(doc, "Tipo Documento")
-    If Not campoTipoDoc Is Nothing Then
-        campoTipoDoc.Value = ""
-        Call FireEvent(campoTipoDoc, "change")
+        Next j
     End If
+    On Error GoTo 0
+End Sub
 
-    Dim campoNomeDoc As Object
-    Set campoNomeDoc = BuscarCampoPorLabel(doc, "Nome")
-    ' Cuidado: não limpar o nome do participante
-    ' Só limpar se estiver na seção de documentos
+Private Sub PreencherTexto(doc As Object, idCampo As String, valor As String)
+    On Error Resume Next
+    Dim elem As Object
+    Set elem = doc.getElementById(idCampo)
+    If Not elem Is Nothing Then
+        elem.Value = valor
+        elem.Focus
+        Call FireEvent(elem, "change")
+        Call FireEvent(elem, "input")
+        Call FireEvent(elem, "blur")
+    End If
+    On Error GoTo 0
+End Sub
 
+Private Sub ClicarRadio(doc As Object, idRadio As String)
+    On Error Resume Next
+    Dim elem As Object
+    Set elem = doc.getElementById(idRadio)
+    If Not elem Is Nothing Then
+        elem.Click
+        Call FireEvent(elem, "change")
+    End If
+    On Error GoTo 0
+End Sub
+
+Private Sub LimparCampo(doc As Object, idCampo As String)
+    On Error Resume Next
+    Dim elem As Object
+    Set elem = doc.getElementById(idCampo)
+    If Not elem Is Nothing Then
+        elem.Value = ""
+        Call FireEvent(elem, "change")
+    End If
+    On Error GoTo 0
+End Sub
+
+Private Sub LimparSelect(doc As Object, idSelect As String)
+    On Error Resume Next
+    Dim elem As Object
+    Set elem = doc.getElementById(idSelect)
+    If Not elem Is Nothing Then
+        elem.selectedIndex = 0
+        Call FireEvent(elem, "change")
+    End If
     On Error GoTo 0
 End Sub
 
@@ -648,47 +567,24 @@ End Sub
 '==============================================================================
 Private Function CapturarIdPasta() As String
     On Error Resume Next
-
     Dim doc As Object
     Set doc = IE.document
 
-    ' Tentar capturar da URL (muitos sistemas colocam o ID na URL após salvar)
+    ' Tentar da URL
     Dim currentUrl As String
     currentUrl = IE.LocationURL
-
-    ' Buscar padrão de ID na URL (ex: ?id=12345 ou /pasta/12345)
     If InStr(currentUrl, "id=") > 0 Then
-        Dim posId As Long
+        Dim posId As Long, endPos As Long
         posId = InStr(currentUrl, "id=") + 3
-        Dim endPos As Long
         endPos = InStr(posId, currentUrl, "&")
         If endPos = 0 Then endPos = Len(currentUrl) + 1
         CapturarIdPasta = Mid(currentUrl, posId, endPos - posId)
         Exit Function
     End If
 
-    ' Tentar capturar do breadcrumb ou título da página
-    Dim titulo As String
-    titulo = doc.Title
-    If InStr(titulo, "Pasta") > 0 Then
-        ' Extrair número do título se presente
-        Dim partes() As String
-        partes = Split(titulo, " ")
-        Dim p As Long
-        For p = 0 To UBound(partes)
-            If IsNumeric(partes(p)) Then
-                CapturarIdPasta = partes(p)
-                Exit Function
-            End If
-        Next p
-    End If
-
-    ' Tentar buscar campo "Código" ou "Nº Pasta" na página
+    ' Tentar campo Código na página
     Dim campoCodigo As Object
     Set campoCodigo = BuscarCampoPorLabel(doc, "Código")
-    If campoCodigo Is Nothing Then
-        Set campoCodigo = BuscarCampoPorLabel(doc, "Pasta")
-    End If
     If Not campoCodigo Is Nothing Then
         CapturarIdPasta = campoCodigo.Value
         Exit Function
@@ -702,9 +598,7 @@ End Function
 ' FUNÇÕES - ADVOGADOS ALEATÓRIOS
 '==============================================================================
 Private Function SortearAdvogadoInterno() As String
-    Dim n As Integer
-    n = Int(Rnd() * 3) + 1
-    Select Case n
+    Select Case Int(Rnd() * 3) + 1
         Case 1: SortearAdvogadoInterno = ADV_INTERNO_1
         Case 2: SortearAdvogadoInterno = ADV_INTERNO_2
         Case 3: SortearAdvogadoInterno = ADV_INTERNO_3
@@ -712,9 +606,7 @@ Private Function SortearAdvogadoInterno() As String
 End Function
 
 Private Function SortearAdvogadoExterno() As String
-    Dim n As Integer
-    n = Int(Rnd() * 5) + 1
-    Select Case n
+    Select Case Int(Rnd() * 5) + 1
         Case 1: SortearAdvogadoExterno = ADV_EXTERNO_1
         Case 2: SortearAdvogadoExterno = ADV_EXTERNO_2
         Case 3: SortearAdvogadoExterno = ADV_EXTERNO_3
@@ -729,27 +621,23 @@ End Function
 Private Function FormatarCPF(cpfRaw As String) As String
     Dim cpf As String
     cpf = Trim(cpfRaw)
-    ' Remover formatação existente
     cpf = Replace(cpf, ".", "")
     cpf = Replace(cpf, "-", "")
     cpf = Replace(cpf, " ", "")
-    ' Preencher com zeros à esquerda se necessário
     Do While Len(cpf) < 11
         cpf = "0" & cpf
     Loop
-    ' Formatar: 000.000.000-00
     FormatarCPF = Left(cpf, 3) & "." & Mid(cpf, 4, 3) & "." & Mid(cpf, 7, 3) & "-" & Right(cpf, 2)
 End Function
 
 '==============================================================================
-' FUNÇÕES AUXILIARES - PESQUISA NO BENNER
+' FUNÇÕES AUXILIARES - PESQUISA
 '==============================================================================
 Private Function PesquisarPartePasta(nome As String) As String
     On Error GoTo ErrHandler
     Dim doc As Object
     Set doc = IE.document
 
-    ' Clicar em "Pastas" no menu superior
     Dim menuPastas As Object
     Set menuPastas = BuscarElementoPorTexto(doc, "A", "Pastas")
     If menuPastas Is Nothing Then Set menuPastas = BuscarElementoPorTexto(doc, "SPAN", "Pastas")
@@ -758,23 +646,17 @@ Private Function PesquisarPartePasta(nome As String) As String
         Call AguardarCarregamento
     End If
 
-    ' Localizar campo "Parte Pasta"
     Set doc = IE.document
     Dim campoParte As Object
     Set campoParte = BuscarCampoPorLabel(doc, "Parte Pasta")
-    If campoParte Is Nothing Then
-        Set campoParte = BuscarInputPorAtributo(doc, "placeholder", "Parte")
-    End If
-    If campoParte Is Nothing Then
-        Set campoParte = BuscarInputPorAtributo(doc, "title", "Parte")
-    End If
+    If campoParte Is Nothing Then Set campoParte = BuscarInputPorAtributo(doc, "placeholder", "Parte")
+    If campoParte Is Nothing Then Set campoParte = BuscarInputPorAtributo(doc, "title", "Parte")
 
     If campoParte Is Nothing Then
-        PesquisarPartePasta = "ERRO: Campo 'Parte Pasta' não encontrado"
+        PesquisarPartePasta = "ERRO: Campo não encontrado"
         Exit Function
     End If
 
-    ' Preencher e pesquisar
     campoParte.Value = ""
     campoParte.Focus
     campoParte.Value = nome
@@ -786,16 +668,15 @@ Private Function PesquisarPartePasta(nome As String) As String
     If Not btnPesquisar Is Nothing Then
         btnPesquisar.Click
     Else
-        Call FireKeyEvent(campoParte, 13)
+        campoParte.Focus
+        Application.SendKeys "{ENTER}", True
     End If
     Call AguardarCarregamento
     Application.Wait Now + TimeValue("00:00:02")
 
-    ' Ler resultados
     Set doc = IE.document
     PesquisarPartePasta = LerResultadosPesquisa(doc, nome)
 
-    ' Limpar
     On Error Resume Next
     Set campoParte = BuscarCampoPorLabel(doc, "Parte Pasta")
     If Not campoParte Is Nothing Then
@@ -813,7 +694,6 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
     On Error Resume Next
     Dim tabelas As Object
     Set tabelas = doc.getElementsByTagName("TABLE")
-
     Dim t As Long, r As Long
     Dim encontrou As Boolean, objetos As String
     encontrou = False: objetos = ""
@@ -826,15 +706,12 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
             rowText = UCase(rows(r).innerText)
             If InStr(rowText, UCase(nomePesquisado)) > 0 Then
                 encontrou = True
-                If InStr(rowText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or _
-                   InStr(rowText, "DIVIDA PREVIDENCIARIA") > 0 Then
+                If InStr(rowText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(rowText, "DIVIDA PREVIDENCIARIA") > 0 Then
                     objetos = objetos & "DÍVIDA PREVIDENCIÁRIA; "
                 Else
                     Dim cells As Object
                     Set cells = rows(r).getElementsByTagName("TD")
-                    If cells.Length > 1 Then
-                        objetos = objetos & Left(cells(1).innerText, 50) & "; "
-                    End If
+                    If cells.Length > 1 Then objetos = objetos & Left(cells(1).innerText, 50) & "; "
                 End If
             End If
         Next r
@@ -842,8 +719,7 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
     On Error GoTo 0
 
     If encontrou Then
-        If InStr(UCase(objetos), "DÍVIDA PREVIDENCIÁRIA") > 0 Or _
-           InStr(UCase(objetos), "DIVIDA PREVIDENCIARIA") > 0 Then
+        If InStr(UCase(objetos), "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(UCase(objetos), "DIVIDA PREVIDENCIARIA") > 0 Then
             LerResultadosPesquisa = "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)"
         ElseIf Len(objetos) > 0 Then
             LerResultadosPesquisa = "ENCONTRADA - OUTRO OBJETO: " & Left(objetos, 100)
@@ -853,9 +729,7 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
     Else
         Dim bodyText As String
         bodyText = UCase(doc.body.innerText)
-        If InStr(bodyText, "NENHUM REGISTRO") > 0 Or _
-           InStr(bodyText, "NÃO ENCONTR") > 0 Or _
-           InStr(bodyText, "SEM RESULTADO") > 0 Then
+        If InStr(bodyText, "NENHUM REGISTRO") > 0 Or InStr(bodyText, "NÃO ENCONTR") > 0 Then
             LerResultadosPesquisa = "NÃO ENCONTRADA - OK para cadastrar"
         Else
             LerResultadosPesquisa = "NÃO ENCONTRADA - verificar manualmente"
@@ -874,14 +748,12 @@ Private Function InicializarNavegador() As Boolean
             Exit Function
         End If
     End If
-
     Set IE = CreateObject("InternetExplorer.Application")
     If IE Is Nothing Then
         MsgBox "Erro ao criar navegador.", vbCritical
         InicializarNavegador = False
         Exit Function
     End If
-
     IE.Visible = True
     InicializarNavegador = True
     On Error GoTo 0
@@ -909,18 +781,6 @@ Private Function BuscarElementoPorTexto(doc As Object, tag As String, texto As S
         End If
     Next i
     Set BuscarElementoPorTexto = Nothing
-    On Error GoTo 0
-End Function
-
-Private Function BuscarElementoPorClasse(doc As Object, classe As String) As Object
-    On Error Resume Next
-    Dim elementos As Object
-    Set elementos = doc.getElementsByClassName(classe)
-    If elementos.Length > 0 Then
-        Set BuscarElementoPorClasse = elementos(0)
-    Else
-        Set BuscarElementoPorClasse = Nothing
-    End If
     On Error GoTo 0
 End Function
 
@@ -960,9 +820,7 @@ Private Function BuscarInputPorAtributo(doc As Object, atributo As String, valor
     Set inputs = doc.getElementsByTagName("INPUT")
     Dim i As Long
     For i = 0 To inputs.Length - 1
-        Dim attrVal As String
-        attrVal = inputs(i).getAttribute(atributo)
-        If InStr(1, attrVal, valor, vbTextCompare) > 0 Then
+        If InStr(1, CStr(inputs(i).getAttribute(atributo)), valor, vbTextCompare) > 0 Then
             Set BuscarInputPorAtributo = inputs(i)
             Exit Function
         End If
@@ -977,11 +835,10 @@ Private Function BuscarBotaoPesquisa(doc As Object) As Object
     If Not BuscarBotaoPesquisa Is Nothing Then Exit Function
     Set BuscarBotaoPesquisa = BuscarElementoPorTexto(doc, "A", "Pesquisar")
     If Not BuscarBotaoPesquisa Is Nothing Then Exit Function
-    Set BuscarBotaoPesquisa = BuscarElementoPorClasse(doc, "btn-search")
-    If Not BuscarBotaoPesquisa Is Nothing Then Exit Function
-    Set BuscarBotaoPesquisa = BuscarElementoPorClasse(doc, "fa-search")
-    If Not BuscarBotaoPesquisa Is Nothing Then
-        Set BuscarBotaoPesquisa = BuscarBotaoPesquisa.parentElement
+    Dim elem As Object
+    Set elem = doc.getElementsByClassName("fa-search")
+    If elem.Length > 0 Then
+        Set BuscarBotaoPesquisa = elem(0).parentElement
         Exit Function
     End If
     Set BuscarBotaoPesquisa = Nothing
@@ -1022,13 +879,6 @@ Private Sub FireEvent(elem As Object, eventName As String)
     On Error GoTo 0
 End Sub
 
-Private Sub FireKeyEvent(elem As Object, keyCode As Integer)
-    On Error Resume Next
-    elem.Focus
-    Application.SendKeys "{ENTER}", True
-    On Error GoTo 0
-End Sub
-
 '==============================================================================
 ' UTILITÁRIOS
 '==============================================================================
@@ -1064,12 +914,11 @@ Public Sub GerarRelatorioStatus()
         End Select
     Next i
 
-    MsgBox "=== RELATÓRIO ===" & vbCrLf & _
-           "Total: " & (lastRow - 1) & vbCrLf & _
+    MsgBox "Total: " & (lastRow - 1) & vbCrLf & _
            "Pendentes: " & pendentes & vbCrLf & _
            "Cadastradas: " & cadastrados & vbCrLf & _
            "Duplicatas: " & duplicatas & vbCrLf & _
            "Já no Benner: " & jaCadastrados & vbCrLf & _
            "Verificar: " & verificar & vbCrLf & _
-           "Erros: " & erros, vbInformation, "Status"
+           "Erros: " & erros, vbInformation, "Relatório"
 End Sub
