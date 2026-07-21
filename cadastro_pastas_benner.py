@@ -37,6 +37,7 @@ from selenium.common.exceptions import (
 # ==============================================================================
 URL_BENNER = "https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=MAIN"
 URL_PASTAS = "https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=PASTAS"
+URL_PESSOAS = "https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=PESSOAS"
 
 CATEGORIA = "Cível"
 TIPO_PASTA = "Cobrança"
@@ -314,10 +315,10 @@ class CadastroPastasBenner:
         return total
 
     # ==========================================================================
-    # ETAPA 2 - PESQUISA NO BENNER (Pastas > Parte Pasta)
+    # ETAPA 2 - PESQUISA NO BENNER (Atalhos > Pessoas > CPF > Processos)
     # ==========================================================================
     def verificar_no_benner(self):
-        """Pesquisa cada participante no Benner para verificar existência."""
+        """Pesquisa cada participante no Benner via Atalhos > Pessoas por CPF."""
         self.carregar_planilha()
         ws = self.ws
 
@@ -326,7 +327,7 @@ class CadastroPastasBenner:
             return
 
         self.iniciar_navegador()
-        self.driver.get(URL_PASTAS)
+        self.driver.get(URL_BENNER)
         self._aguardar_carregamento()
 
         last_row = ws.max_row
@@ -339,10 +340,11 @@ class CadastroPastasBenner:
                 continue
 
             nome = str(ws.cell(row, COL_NOME).value or "").strip()
-            if not nome:
+            cpf = self._formatar_cpf(str(ws.cell(row, COL_CPF).value or ""))
+            if not cpf or not nome:
                 continue
 
-            resultado = self._pesquisar_parte_pasta(nome)
+            resultado = self._pesquisar_pessoa_por_cpf(cpf, nome)
             ws.cell(row, COL_PESQUISA_BENNER, resultado)
             pesquisados += 1
 
@@ -365,7 +367,7 @@ class CadastroPastasBenner:
                 else:
                     analise_atual = str(ws.cell(row, COL_ANALISE).value or "")
                     ws.cell(row, COL_ANALISE, f"{analise_atual} | PASTA EXISTENTE OUTRO OBJETO")
-            elif "NÃO ENCONTRADA" in resultado_upper:
+            elif "NÃO ENCONTRADA" in resultado_upper or "SEM PROCESSOS" in resultado_upper:
                 if status == "VERIFICAR":
                     ws.cell(row, COL_STATUS, "PENDENTE")
 
@@ -660,74 +662,161 @@ class CadastroPastasBenner:
     # ==========================================================================
     # PESQUISA NO BENNER
     # ==========================================================================
-    def _pesquisar_parte_pasta(self, nome: str) -> str:
-        """Pesquisa participante em Pastas > Parte Pasta (campo select2)."""
+    def _pesquisar_pessoa_por_cpf(self, cpf: str, nome: str) -> str:
+        """Pesquisa pessoa via Atalhos > Pessoas por CPF e verifica processos."""
         try:
             wait = WebDriverWait(self.driver, 15)
 
-            # Navegar para Pastas se necessário
-            menu_pastas = self._buscar_elemento_por_texto("a", "Pastas")
-            if not menu_pastas:
-                menu_pastas = self._buscar_elemento_por_texto("span", "Pastas")
-            if menu_pastas:
-                menu_pastas.click()
+            # Navegar para Atalhos > Pessoas
+            menu_atalhos = self._buscar_elemento_por_texto("a", "Atalhos")
+            if not menu_atalhos:
+                menu_atalhos = self._buscar_elemento_por_texto("span", "Atalhos")
+            if menu_atalhos:
+                menu_atalhos.click()
+                self._aguardar_carregamento()
+                time.sleep(1)
+
+            link_pessoas = self._buscar_elemento_por_texto("a", "Pessoas")
+            if not link_pessoas:
+                link_pessoas = self._buscar_elemento_por_texto("span", "Pessoas")
+            if link_pessoas:
+                link_pessoas.click()
+                self._aguardar_carregamento()
+            else:
+                # Fallback: navegar direto pela URL
+                self.driver.get(URL_PESSOAS)
                 self._aguardar_carregamento()
 
-            # Campo Parte Pasta é um select2 (data-fieldname='PARTEPASTA')
-            container_xpath = ("//select[@data-fieldname='PARTEPASTA']"
-                               "/ancestor::div[contains(@class,'input-group')]")
-
-            # Clicar na caixa do select2 para abrir o campo
-            caixa = wait.until(EC.presence_of_element_located(
-                (By.XPATH, container_xpath + "//span[contains(@class,'select2-selection')]")))
-            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", caixa)
-            caixa.click()
-
-            # Digitar no input de busca do select2
-            campo = wait.until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "input.select2-search__field")))
-            campo.clear()
-            campo.send_keys(nome)
-
-            # Aguardar autocomplete e selecionar primeiro resultado
+            # Localizar campo CPF e preencher
+            campo_cpf = None
             try:
-                opcao = wait.until(EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "li.select2-results__option")))
-                opcao.click()
+                campo_cpf = wait.until(EC.presence_of_element_located(
+                    (By.XPATH, "//input[contains(@data-fieldname,'CPF') or contains(@id,'CPF') or contains(@placeholder,'CPF')]")))
             except TimeoutException:
-                campo.send_keys(Keys.ENTER)  # fallback
+                # Tentar buscar por label
+                campo_cpf = self._buscar_campo_por_label("CPF")
+            if not campo_cpf:
+                campo_cpf = self._buscar_input_por_atributo("placeholder", "CPF")
 
-            # Clicar em Filtrar (lupa)
+            if not campo_cpf:
+                return "ERRO: Campo CPF não encontrado"
+
+            campo_cpf.clear()
+            campo_cpf.send_keys(cpf)
+            self.driver.execute_script(
+                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", campo_cpf
+            )
+
+            # Clicar em Filtrar/Pesquisar
             try:
                 self.driver.find_element(By.XPATH, "//a[contains(@id,'FilterButton')]").click()
             except NoSuchElementException:
-                btn_pesquisar = self._buscar_elemento_por_texto("button", "Pesquisar")
-                if not btn_pesquisar:
-                    btn_pesquisar = self._buscar_elemento_por_texto("a", "Pesquisar")
-                if btn_pesquisar:
-                    btn_pesquisar.click()
+                btn = self._buscar_elemento_por_texto("button", "Pesquisar")
+                if not btn:
+                    btn = self._buscar_elemento_por_texto("a", "Pesquisar")
+                if btn:
+                    btn.click()
                 else:
-                    campo.send_keys(Keys.ENTER)
+                    campo_cpf.send_keys(Keys.ENTER)
 
             self._aguardar_carregamento()
             time.sleep(2)
 
-            # Ler resultados
-            resultado = self._ler_resultados_pesquisa(nome)
+            # Verificar se encontrou a pessoa
+            body_text = self.driver.find_element(By.TAG_NAME, "body").text.upper()
+            if "NENHUM REGISTRO" in body_text or "NÃO ENCONTR" in body_text:
+                return "PESSOA NÃO ENCONTRADA - OK para cadastrar"
 
-            # Limpar campo (tentar resetar o select2)
+            # Pessoa encontrada - clicar nela para ver detalhes/processos
             try:
-                caixa_reset = self.driver.find_element(
-                    By.XPATH, container_xpath + "//span[contains(@class,'select2-selection')]")
-                self.driver.execute_script(
-                    "var sel = arguments[0].closest('.input-group').querySelector('select');"
-                    "if(sel){$(sel).val(null).trigger('change');}",
-                    caixa_reset
-                )
+                # Buscar link na grid de resultados que contenha o nome
+                link_pessoa = None
+                tables = self.driver.find_elements(By.TAG_NAME, "table")
+                for table in tables:
+                    try:
+                        rows = table.find_elements(By.TAG_NAME, "tr")
+                        for tr in rows:
+                            if nome.upper() in tr.text.upper() or cpf.replace(".", "").replace("-", "") in tr.text.replace(".", "").replace("-", ""):
+                                links = tr.find_elements(By.TAG_NAME, "a")
+                                if links:
+                                    link_pessoa = links[0]
+                                    break
+                    except StaleElementReferenceException:
+                        continue
+                    if link_pessoa:
+                        break
+
+                if link_pessoa:
+                    link_pessoa.click()
+                    self._aguardar_carregamento()
+                    time.sleep(2)
+                else:
+                    return "PESSOA ENCONTRADA - não foi possível abrir detalhes"
+
+            except Exception as e:
+                return f"PESSOA ENCONTRADA - erro ao abrir: {e}"
+
+            # Verificar se há processos/pastas na página da pessoa
+            body_text = self.driver.find_element(By.TAG_NAME, "body").text.upper()
+
+            # Verificar aba Processos se existir
+            try:
+                aba_processos = self._buscar_elemento_por_texto("a", "Processos")
+                if not aba_processos:
+                    aba_processos = self._buscar_elemento_por_texto("a", "Pasta")
+                if aba_processos:
+                    aba_processos.click()
+                    self._aguardar_carregamento()
+                    time.sleep(2)
+                    body_text = self.driver.find_element(By.TAG_NAME, "body").text.upper()
             except Exception:
                 pass
 
-            return resultado
+            # Capturar informações de processos/pastas
+            if "NENHUM REGISTRO" in body_text or "SEM PROCESSO" in body_text:
+                return "PESSOA ENCONTRADA - SEM PROCESSOS"
+
+            # Verificar se há Dívida Previdenciária nos processos
+            id_pasta = ""
+            nome_pasta = ""
+            tem_divida_prev = False
+
+            tables = self.driver.find_elements(By.TAG_NAME, "table")
+            for table in tables:
+                try:
+                    rows = table.find_elements(By.TAG_NAME, "tr")
+                    for tr in rows:
+                        row_text = tr.text.upper()
+                        if "DÍVIDA PREVIDENCIÁRIA" in row_text or "DIVIDA PREVIDENCIARIA" in row_text:
+                            tem_divida_prev = True
+                            # Tentar capturar ID da pasta e nome
+                            cells = tr.find_elements(By.TAG_NAME, "td")
+                            if cells:
+                                nome_pasta = cells[0].text.strip()
+                            links = tr.find_elements(By.TAG_NAME, "a")
+                            for link in links:
+                                href = link.get_attribute("href") or ""
+                                m = re.search(r"id=(\d+)", href)
+                                if m:
+                                    id_pasta = m.group(1)
+                                    break
+                            break
+                except StaleElementReferenceException:
+                    continue
+
+            # Voltar para a página de Pessoas para a próxima busca
+            self.driver.back()
+            self._aguardar_carregamento()
+            self.driver.back()
+            self._aguardar_carregamento()
+
+            if tem_divida_prev:
+                prefixo = f"[{nome_pasta}] " if nome_pasta else ""
+                sufixo = f" | PASTA:{id_pasta}" if id_pasta else ""
+                return f"{prefixo}ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA){sufixo}"
+            else:
+                # Tem processos mas não tem Dívida Previdenciária
+                return "PESSOA ENCONTRADA - PROCESSOS SEM DÍVIDA PREVIDENCIÁRIA"
 
         except Exception as e:
             return f"ERRO: {e}"

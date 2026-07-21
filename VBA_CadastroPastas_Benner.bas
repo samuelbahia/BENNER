@@ -19,6 +19,7 @@ Option Explicit
 ' Constantes do sistema
 Private Const URL_BENNER As String = "https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=MAIN"
 Private Const URL_PASTAS As String = "https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=PASTAS"
+Private Const URL_PESSOAS As String = "https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=PESSOAS"
 Private Const CATEGORIA As String = "Cível"
 Private Const TIPO_PASTA As String = "Cobrança"
 Private Const CAUSA_PEDIR As String = "Previdencial"
@@ -270,7 +271,7 @@ SkipLinha:
 End Sub
 
 '==============================================================================
-' ETAPA 2 - PESQUISA NO BENNER (Pastas > Parte Pasta)
+' ETAPA 2 - PESQUISA NO BENNER (Atalhos > Pessoas > CPF > Processos)
 '==============================================================================
 Public Sub VerificarNoBenner()
     Dim wsData As Worksheet
@@ -284,25 +285,26 @@ Public Sub VerificarNoBenner()
         Exit Sub
     End If
 
-    If MsgBox("Pesquisará cada participante no Benner (Pastas > Parte Pasta)." & vbCrLf & _
+    If MsgBox("Pesquisará cada participante no Benner (Atalhos > Pessoas > CPF)." & vbCrLf & _
               "Certifique-se de estar LOGADO. Continuar?", vbYesNo + vbQuestion, "Pesquisa") = vbNo Then Exit Sub
 
     If Not InicializarNavegador() Then Exit Sub
-    IE.navigate URL_PASTAS
+    IE.navigate URL_BENNER
     Call AguardarCarregamento
 
     Dim pesquisados As Long, jaExistentes As Long
     pesquisados = 0: jaExistentes = 0
-    Dim i As Long, nome As String, statusAtual As String
+    Dim i As Long, nome As String, statusAtual As String, cpf As String
 
     For i = 2 To lastRow
         statusAtual = UCase(Trim(CStr(wsData.Cells(i, COL_STATUS).Value)))
         If statusAtual = "PENDENTE" Or statusAtual = "VERIFICAR" Then
             nome = Trim(CStr(wsData.Cells(i, COL_NOME).Value))
-            If Len(nome) = 0 Then GoTo ProximaLinha
+            cpf = FormatarCPF(CStr(wsData.Cells(i, COL_CPF).Value))
+            If Len(nome) = 0 Or Len(cpf) = 0 Then GoTo ProximaLinha
 
             Dim resultadoPesquisa As String
-            resultadoPesquisa = PesquisarPartePasta(nome)
+            resultadoPesquisa = PesquisarPessoaPorCPF(cpf, nome)
             wsData.Cells(i, COL_PESQUISA_BENNER).Value = resultadoPesquisa
             pesquisados = pesquisados + 1
 
@@ -313,7 +315,6 @@ Public Sub VerificarNoBenner()
                     Dim posPasta As Long, idExtraido As String
                     posPasta = InStr(resultadoPesquisa, "PASTA:") + 6
                     idExtraido = Mid(resultadoPesquisa, posPasta)
-                    ' Limpar caracteres não numéricos
                     Dim ci As Long
                     For ci = 1 To Len(idExtraido)
                         If Not IsNumeric(Mid(idExtraido, ci, 1)) Then
@@ -338,7 +339,8 @@ Public Sub VerificarNoBenner()
                 Else
                     wsData.Cells(i, COL_ANALISE).Value = wsData.Cells(i, COL_ANALISE).Value & " | PASTA EXISTENTE OUTRO OBJETO"
                 End If
-            ElseIf InStr(UCase(resultadoPesquisa), "NÃO ENCONTRADA") > 0 Then
+            ElseIf InStr(UCase(resultadoPesquisa), "NÃO ENCONTRADA") > 0 Or _
+                   InStr(UCase(resultadoPesquisa), "SEM PROCESSOS") > 0 Then
                 If statusAtual = "VERIFICAR" Then wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
             End If
 
@@ -794,70 +796,92 @@ End Function
 '==============================================================================
 ' FUNÇÕES AUXILIARES - PESQUISA
 '==============================================================================
-Private Function PesquisarPartePasta(nome As String) As String
+Private Function PesquisarPessoaPorCPF(cpf As String, nome As String) As String
     On Error GoTo ErrHandler
     Dim doc As Object
-    Set doc = IE.document
 
-    Dim menuPastas As Object
-    Set menuPastas = BuscarElementoPorTexto(doc, "A", "Pastas")
-    If menuPastas Is Nothing Then Set menuPastas = BuscarElementoPorTexto(doc, "SPAN", "Pastas")
-    If Not menuPastas Is Nothing Then
-        menuPastas.Click
+    ' Navegar para Atalhos > Pessoas
+    Dim menuAtalhos As Object
+    Set doc = IE.document
+    Set menuAtalhos = BuscarElementoPorTexto(doc, "A", "Atalhos")
+    If menuAtalhos Is Nothing Then Set menuAtalhos = BuscarElementoPorTexto(doc, "SPAN", "Atalhos")
+    If Not menuAtalhos Is Nothing Then
+        menuAtalhos.Click
+        Call AguardarCarregamento
+        Application.Wait Now + TimeValue("00:00:01")
+    End If
+
+    Set doc = IE.document
+    Dim linkPessoas As Object
+    Set linkPessoas = BuscarElementoPorTexto(doc, "A", "Pessoas")
+    If linkPessoas Is Nothing Then Set linkPessoas = BuscarElementoPorTexto(doc, "SPAN", "Pessoas")
+    If Not linkPessoas Is Nothing Then
+        linkPessoas.Click
+        Call AguardarCarregamento
+    Else
+        ' Fallback: navegar direto pela URL
+        IE.navigate URL_PESSOAS
         Call AguardarCarregamento
     End If
 
+    ' Localizar campo CPF e preencher
     Set doc = IE.document
-    Dim campoParte As Object
-    Set campoParte = BuscarCampoPorLabel(doc, "Parte Pasta")
-    If campoParte Is Nothing Then Set campoParte = BuscarInputPorAtributo(doc, "placeholder", "Parte")
-    If campoParte Is Nothing Then Set campoParte = BuscarInputPorAtributo(doc, "title", "Parte")
+    Dim campoCPF As Object
+    Set campoCPF = BuscarInputPorAtributo(doc, "data-fieldname", "CPF")
+    If campoCPF Is Nothing Then Set campoCPF = BuscarInputPorAtributo(doc, "placeholder", "CPF")
+    If campoCPF Is Nothing Then Set campoCPF = BuscarCampoPorLabel(doc, "CPF")
 
-    If campoParte Is Nothing Then
-        PesquisarPartePasta = "ERRO: Campo não encontrado"
+    If campoCPF Is Nothing Then
+        PesquisarPessoaPorCPF = "ERRO: Campo CPF não encontrado"
         Exit Function
     End If
 
-    campoParte.Value = ""
-    campoParte.Focus
-    campoParte.Value = nome
-    Call FireEvent(campoParte, "change")
-    Call FireEvent(campoParte, "input")
+    campoCPF.Value = ""
+    campoCPF.Focus
+    campoCPF.Value = cpf
+    Call FireEvent(campoCPF, "change")
+    Call FireEvent(campoCPF, "input")
 
-    Dim btnPesquisar As Object
-    Set btnPesquisar = BuscarBotaoPesquisa(doc)
-    If Not btnPesquisar Is Nothing Then
-        btnPesquisar.Click
+    ' Clicar em Filtrar/Pesquisar
+    Dim btnFiltrar As Object
+    Set btnFiltrar = Nothing
+    Dim allLinks As Object
+    Set allLinks = doc.getElementsByTagName("A")
+    Dim i As Long
+    For i = 0 To allLinks.Length - 1
+        If InStr(allLinks(i).getAttribute("id"), "FilterButton") > 0 Then
+            Set btnFiltrar = allLinks(i)
+            Exit For
+        End If
+    Next i
+    If btnFiltrar Is Nothing Then Set btnFiltrar = BuscarBotaoPesquisa(doc)
+
+    If Not btnFiltrar Is Nothing Then
+        btnFiltrar.Click
     Else
-        campoParte.Focus
+        campoCPF.Focus
         Application.SendKeys "{ENTER}", True
     End If
     Call AguardarCarregamento
     Application.Wait Now + TimeValue("00:00:02")
 
+    ' Verificar se encontrou a pessoa
     Set doc = IE.document
-    PesquisarPartePasta = LerResultadosPesquisa(doc, nome)
-
-    On Error Resume Next
-    Set campoParte = BuscarCampoPorLabel(doc, "Parte Pasta")
-    If Not campoParte Is Nothing Then
-        campoParte.Value = ""
-        Call FireEvent(campoParte, "change")
+    Dim bodyText As String
+    bodyText = UCase(doc.body.innerText)
+    If InStr(bodyText, "NENHUM REGISTRO") > 0 Or InStr(bodyText, "NÃO ENCONTR") > 0 Then
+        PesquisarPessoaPorCPF = "PESSOA NÃO ENCONTRADA - OK para cadastrar"
+        Exit Function
     End If
-    On Error GoTo 0
-    Exit Function
 
-ErrHandler:
-    PesquisarPartePasta = "ERRO: " & Err.Description
-End Function
-
-Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) As String
-    On Error Resume Next
+    ' Pessoa encontrada - clicar nela para ver detalhes
+    Dim linkPessoa As Object
+    Set linkPessoa = Nothing
     Dim tabelas As Object
     Set tabelas = doc.getElementsByTagName("TABLE")
     Dim t As Long, r As Long
-    Dim encontrou As Boolean, objetos As String, idPastaEncontrada As String, nomePasta As String
-    encontrou = False: objetos = "": idPastaEncontrada = "": nomePasta = ""
+    Dim cpfLimpo As String
+    cpfLimpo = Replace(Replace(Replace(cpf, ".", ""), "-", ""), "/", "")
 
     For t = 0 To tabelas.Length - 1
         Dim rows As Object
@@ -865,86 +889,114 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
         For r = 0 To rows.Length - 1
             Dim rowText As String
             rowText = UCase(rows(r).innerText)
-            If InStr(rowText, UCase(nomePesquisado)) > 0 Then
-                encontrou = True
-                ' Capturar valor do campo Pasta (primeiro link ou primeira célula)
-                If Len(nomePasta) = 0 Then
-                    Dim cells As Object
-                    Set cells = rows(r).getElementsByTagName("TD")
-                    If cells.Length > 0 Then
-                        nomePasta = Trim(cells(0).innerText)
-                    End If
-                End If
-                ' Tentar capturar ID da pasta via link
-                If Len(idPastaEncontrada) = 0 Then
-                    Dim links As Object
-                    Set links = rows(r).getElementsByTagName("A")
-                    Dim lk As Long
-                    For lk = 0 To links.Length - 1
-                        Dim href As String
-                        href = CStr(links(lk).getAttribute("href"))
-                        Dim posId As Long
-                        posId = InStr(href, "id=")
-                        If posId > 0 Then
-                            Dim idStr As String
-                            idStr = Mid(href, posId + 3)
-                            Dim posAmp As Long
-                            posAmp = InStr(idStr, "&")
-                            If posAmp > 0 Then idStr = Left(idStr, posAmp - 1)
-                            If Len(idStr) > 0 And IsNumeric(idStr) Then
-                                idPastaEncontrada = idStr
-                                Exit For
-                            End If
-                        End If
-                    Next lk
-                End If
-                ' Verificar coluna Pedido (segunda célula) especificamente
-                Dim cellsObj As Object
-                Set cellsObj = rows(r).getElementsByTagName("TD")
-                Dim pedidoText As String
-                pedidoText = ""
-                If cellsObj.Length > 1 Then pedidoText = UCase(Trim(cellsObj(1).innerText))
-                If InStr(pedidoText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(pedidoText, "DIVIDA PREVIDENCIARIA") > 0 Then
-                    objetos = objetos & "DÍVIDA PREVIDENCIÁRIA; "
-                ElseIf cellsObj.Length > 1 Then
-                    objetos = objetos & Left(cellsObj(1).innerText, 50) & "; "
+            Dim rowTextLimpo As String
+            rowTextLimpo = Replace(Replace(Replace(rows(r).innerText, ".", ""), "-", ""), "/", "")
+            If InStr(UCase(rowTextLimpo), cpfLimpo) > 0 Or InStr(rowText, UCase(nome)) > 0 Then
+                Dim rowLinks As Object
+                Set rowLinks = rows(r).getElementsByTagName("A")
+                If rowLinks.Length > 0 Then
+                    Set linkPessoa = rowLinks(0)
+                    Exit For
                 End If
             End If
         Next r
+        If Not linkPessoa Is Nothing Then Exit For
     Next t
+
+    If linkPessoa Is Nothing Then
+        PesquisarPessoaPorCPF = "PESSOA ENCONTRADA - não foi possível abrir detalhes"
+        Exit Function
+    End If
+
+    linkPessoa.Click
+    Call AguardarCarregamento
+    Application.Wait Now + TimeValue("00:00:02")
+
+    ' Verificar aba Processos se existir
+    Set doc = IE.document
+    Dim abaProcessos As Object
+    Set abaProcessos = BuscarElementoPorTexto(doc, "A", "Processos")
+    If abaProcessos Is Nothing Then Set abaProcessos = BuscarElementoPorTexto(doc, "A", "Pasta")
+    If Not abaProcessos Is Nothing Then
+        abaProcessos.Click
+        Call AguardarCarregamento
+        Application.Wait Now + TimeValue("00:00:02")
+    End If
+
+    ' Verificar processos
+    Set doc = IE.document
+    bodyText = UCase(doc.body.innerText)
+
+    If InStr(bodyText, "NENHUM REGISTRO") > 0 Or InStr(bodyText, "SEM PROCESSO") > 0 Then
+        PesquisarPessoaPorCPF = "PESSOA ENCONTRADA - SEM PROCESSOS"
+        GoTo Voltar
+    End If
+
+    ' Verificar se há Dívida Previdenciária nos processos
+    Dim idPastaEncontrada As String, nomePasta As String
+    Dim temDividaPrev As Boolean
+    idPastaEncontrada = "": nomePasta = "": temDividaPrev = False
+
+    Set tabelas = doc.getElementsByTagName("TABLE")
+    For t = 0 To tabelas.Length - 1
+        Set rows = tabelas(t).getElementsByTagName("TR")
+        For r = 0 To rows.Length - 1
+            rowText = UCase(rows(r).innerText)
+            If InStr(rowText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(rowText, "DIVIDA PREVIDENCIARIA") > 0 Then
+                temDividaPrev = True
+                Dim cells As Object
+                Set cells = rows(r).getElementsByTagName("TD")
+                If cells.Length > 0 And Len(nomePasta) = 0 Then
+                    nomePasta = Trim(cells(0).innerText)
+                End If
+                Dim lnks As Object
+                Set lnks = rows(r).getElementsByTagName("A")
+                Dim lk As Long
+                For lk = 0 To lnks.Length - 1
+                    Dim href As String
+                    href = CStr(lnks(lk).getAttribute("href"))
+                    Dim posId As Long
+                    posId = InStr(href, "id=")
+                    If posId > 0 Then
+                        Dim idStr As String
+                        idStr = Mid(href, posId + 3)
+                        Dim posAmp As Long
+                        posAmp = InStr(idStr, "&")
+                        If posAmp > 0 Then idStr = Left(idStr, posAmp - 1)
+                        If Len(idStr) > 0 And IsNumeric(idStr) Then
+                            idPastaEncontrada = idStr
+                            Exit For
+                        End If
+                    End If
+                Next lk
+                Exit For
+            End If
+        Next r
+        If temDividaPrev Then Exit For
+    Next t
+
+    ' Montar resultado
+    If temDividaPrev Then
+        Dim prefixoPasta As String, sufixoId As String
+        If Len(nomePasta) > 0 Then prefixoPasta = "[" & nomePasta & "] " Else prefixoPasta = ""
+        If Len(idPastaEncontrada) > 0 Then sufixoId = " | PASTA:" & idPastaEncontrada Else sufixoId = ""
+        PesquisarPessoaPorCPF = prefixoPasta & "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)" & sufixoId
+    Else
+        PesquisarPessoaPorCPF = "PESSOA ENCONTRADA - PROCESSOS SEM DÍVIDA PREVIDENCIÁRIA"
+    End If
+
+Voltar:
+    ' Voltar para a página de Pessoas para a próxima busca
+    On Error Resume Next
+    IE.GoBack
+    Call AguardarCarregamento
+    IE.GoBack
+    Call AguardarCarregamento
     On Error GoTo 0
+    Exit Function
 
-    Dim sufixoId As String
-    If Len(idPastaEncontrada) > 0 Then
-        sufixoId = " | PASTA:" & idPastaEncontrada
-    Else
-        sufixoId = ""
-    End If
-
-    Dim prefixoPasta As String
-    If Len(nomePasta) > 0 Then
-        prefixoPasta = "[" & nomePasta & "] "
-    Else
-        prefixoPasta = ""
-    End If
-
-    If encontrou Then
-        If InStr(UCase(objetos), "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(UCase(objetos), "DIVIDA PREVIDENCIARIA") > 0 Then
-            LerResultadosPesquisa = prefixoPasta & "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)" & sufixoId
-        ElseIf Len(objetos) > 0 Then
-            LerResultadosPesquisa = prefixoPasta & "ENCONTRADA - OUTRO OBJETO: " & Left(objetos, 100) & sufixoId
-        Else
-            LerResultadosPesquisa = prefixoPasta & "ENCONTRADA - objeto não identificado" & sufixoId
-        End If
-    Else
-        Dim bodyText As String
-        bodyText = UCase(doc.body.innerText)
-        If InStr(bodyText, "NENHUM REGISTRO") > 0 Or InStr(bodyText, "NÃO ENCONTR") > 0 Then
-            LerResultadosPesquisa = "NÃO ENCONTRADA - OK para cadastrar"
-        Else
-            LerResultadosPesquisa = "NÃO ENCONTRADA - verificar manualmente"
-        End If
-    End If
+ErrHandler:
+    PesquisarPessoaPorCPF = "ERRO: " & Err.Description
 End Function
 
 '==============================================================================
