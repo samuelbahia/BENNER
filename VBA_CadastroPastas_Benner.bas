@@ -484,14 +484,17 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
     ' === PASSO 1: +Novo > Cadastro rápido de pasta ===
     Set doc = IE.document
     Dim btnNovo As Object
-    Set btnNovo = BuscarElementoPorTexto(doc, "A", "+Novo")
+    ' Botão sidebar_novoItem (barra lateral "+Novo")
+    Set btnNovo = doc.getElementById("sidebar_novoItem")
+    If btnNovo Is Nothing Then Set btnNovo = BuscarElementoPorTexto(doc, "A", "+Novo")
+    If btnNovo Is Nothing Then Set btnNovo = BuscarElementoPorTexto(doc, "A", "Novo")
     If btnNovo Is Nothing Then Set btnNovo = BuscarElementoPorTexto(doc, "SPAN", "Novo")
     If btnNovo Is Nothing Then Set btnNovo = BuscarElementoPorTexto(doc, "BUTTON", "Novo")
 
     If Not btnNovo Is Nothing Then
         btnNovo.Click
         Call AguardarCarregamento
-        ' Espera extra para o submenu renderizar completamente
+        ' Espera extra para o submenu da barra lateral renderizar
         Application.Wait Now + TimeValue("00:00:03")
     Else
         CadastrarPastaCivel = "Botão +Novo não encontrado"
@@ -500,11 +503,10 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
 
     Set doc = IE.document
 
-    ' DEBUG: Mostrar texto visível na tela para diagnóstico
-    MsgBox "DEBUG - Texto visível após +Novo (primeiros 500 chars):" & vbCrLf & Left(doc.body.innerText, 500), vbInformation, "Debug"
-
     Dim linkCadRapido As Object
     Set linkCadRapido = BuscarElementoPorTexto(doc, "A", "Cadastro rápido de pasta")
+    If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "A", "Cadastro rápido")
+    If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "SPAN", "Cadastro rápido de pasta")
     If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "SPAN", "Cadastro rápido")
     If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "LI", "Cadastro rápido")
     If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "DIV", "Cadastro rápido")
@@ -514,8 +516,18 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
         linkCadRapido.Click
         Call AguardarCarregamento
     Else
-        CadastrarPastaCivel = "Cadastro rápido não encontrado"
-        Exit Function
+        ' Fallback: executar comando JS diretamente (Benner.Page.commandExecute)
+        On Error Resume Next
+        doc.parentWindow.execScript "Benner.Page.commandExecute('PR_CADASTRORAPIDOPASTA.FORM/INSERT_CADASTRO_RAPIDO')", "JavaScript"
+        On Error GoTo ErrHandler
+        Call AguardarCarregamento
+        Application.Wait Now + TimeValue("00:00:02")
+        ' Verificar se navegou (se URL mudou ou conteúdo carregou)
+        Set doc = IE.document
+        If InStr(UCase(doc.body.innerText), "CATEGORIA") = 0 Then
+            CadastrarPastaCivel = "Cadastro rápido não encontrado"
+            Exit Function
+        End If
     End If
 
     ' === PASSO 2: Selecionar Categoria Cível ===
