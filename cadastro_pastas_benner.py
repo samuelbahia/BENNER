@@ -47,6 +47,7 @@ ANDAMENTO = "PEDIDO DE AJUIZAMENTO DE AÇÃO"
 PEDIDO = "Dívida Previdenciária"
 RITO = "Ordinário"
 TIPO_PROCESSO = "Ativo"
+RISCO = "Possível"
 
 # === IDs dos campos ASP.NET (Mapa de Campos Benner) ===
 PFX = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_"
@@ -101,6 +102,9 @@ ID_ADV_EXTERNO_VALUE = PFX + "ctl206_ADVOGADOEXTERNO_VALUE"
 # Pedidos
 ID_PEDIDO_SELECT = PFX + "ctl213_ctl01_select"
 ID_PEDIDO_VALUE = PFX + "ctl213_PEDIDO1_VALUE"
+ID_VALOR_PEDIDO = PFX + "VALORPEDIDO1"
+ID_RISCO_SELECT = PFX + "ctl230_ctl01_select"
+ID_RISCO_VALUE = PFX + "ctl230_RISCOPEDIDO1_VALUE"
 
 # Documentos (para limpar)
 ID_TIPO_DOC_ARQ_SELECT = PFX + "ctl256_ctl01_select"
@@ -122,6 +126,7 @@ COL_CNJ = 31           # AE
 COL_PLANO_DESC = 32    # AF
 COL_PESQUISA_BENNER = 33  # AG
 COL_ID_PASTA = 34      # AH
+COL_VALOR_PEDIDO = 35  # AI - Valor do pedido (soma quando agrupado)
 
 # Advogados internos (seleção aleatória)
 ADVOGADOS_INTERNOS = [
@@ -217,10 +222,11 @@ class CadastroPastasBenner:
         ws.cell(1, COL_PLANO_DESC, "PLANO DESCRIÇÃO")
         ws.cell(1, COL_PESQUISA_BENNER, "PESQUISA BENNER")
         ws.cell(1, COL_ID_PASTA, "ID PASTA BENNER")
+        ws.cell(1, COL_VALOR_PEDIDO, "VALOR PEDIDO")
 
         # Limpar dados anteriores
         for row in range(2, last_row + 1):
-            for col in range(COL_ANALISE, COL_ID_PASTA + 1):
+            for col in range(COL_ANALISE, COL_VALOR_PEDIDO + 1):
                 ws.cell(row, col, None)
 
         # Agrupar por participante: coletar contratos por nome
@@ -278,12 +284,16 @@ class CadastroPastasBenner:
                     contratos_unicos = list(dict.fromkeys(contratos))  # preservar ordem, remover duplicados
                     numero_combinado = "DP" + "/".join(contratos_unicos)
 
+                    # Somar valor da dívida de todas as linhas válidas
+                    valor_total = sum(float(ws.cell(r, COL_VALOR_DIVIDA).value or 0) for r in linhas_validas)
+
                     if row == linhas_validas[0]:
-                        # Primeira linha: PENDENTE, recebe número combinado
+                        # Primeira linha: PENDENTE, recebe número combinado e valor somado
                         ws.cell(row, COL_ANALISE,
                                 f"MESMO PARTICIPANTE - {len(linhas_validas)} OPERAÇÕES (AGRUPADO)")
                         ws.cell(row, COL_STATUS, "PENDENTE")
                         ws.cell(row, COL_CNJ, numero_combinado)
+                        ws.cell(row, COL_VALOR_PEDIDO, valor_total)
                     else:
                         # Demais linhas: agrupadas com a primeira
                         ws.cell(row, COL_ANALISE,
@@ -294,6 +304,9 @@ class CadastroPastasBenner:
                     ws.cell(row, COL_ANALISE, "OK")
                     ws.cell(row, COL_STATUS, "PENDENTE")
                     ws.cell(row, COL_CNJ, f"DP{contrato}")
+                    # Valor individual
+                    valor_ind = float(ws.cell(row, COL_VALOR_DIVIDA).value or 0)
+                    ws.cell(row, COL_VALOR_PEDIDO, valor_ind)
 
         self.salvar_planilha()
         total = last_row - 1
@@ -398,7 +411,12 @@ class CadastroPastasBenner:
         for row in pendentes:
             nome = str(ws.cell(row, COL_NOME).value or "").strip()
             contrato = str(ws.cell(row, COL_CONTRATO).value or "")
-            valor_divida = float(ws.cell(row, COL_VALOR_DIVIDA).value or 0)
+            # Usar valor do COL_VALOR_PEDIDO (já somado na Etapa 1 para agrupados)
+            valor_pedido = ws.cell(row, COL_VALOR_PEDIDO).value
+            if valor_pedido is None or valor_pedido == "":
+                valor_pedido = float(ws.cell(row, COL_VALOR_DIVIDA).value or 0)
+            else:
+                valor_pedido = float(valor_pedido)
             gerencia = str(ws.cell(row, COL_GERENCIA).value or "").strip()
             uf = str(ws.cell(row, COL_UF).value or "").strip()
             cpf = self._formatar_cpf(str(ws.cell(row, COL_CPF).value or ""))
@@ -414,7 +432,7 @@ class CadastroPastasBenner:
                 escritorio_por_participante[nome_upper] = adv_externo
 
             resultado = self._cadastrar_pasta_civel(
-                nome, contrato, valor_divida, gerencia, uf, cpf,
+                nome, contrato, valor_pedido, gerencia, uf, cpf,
                 filial, numero_cnj, adv_interno, adv_externo
             )
 
@@ -450,7 +468,7 @@ class CadastroPastasBenner:
     # FUNÇÃO PRINCIPAL - CADASTRAR PASTA CÍVEL (IDs exatos)
     # ==========================================================================
     def _cadastrar_pasta_civel(
-        self, nome: str, contrato: str, valor_divida: float,
+        self, nome: str, contrato: str, valor_pedido: float,
         gerencia: str, uf: str, cpf: str, filial: str,
         numero_cnj: str, adv_interno: str, adv_externo: str
     ) -> str:
@@ -525,6 +543,11 @@ class CadastroPastasBenner:
 
             # === PASSO 5: Pedido ===
             self._selecionar_lookup(ID_PEDIDO_SELECT, ID_PEDIDO_VALUE, PEDIDO)
+            # Valor Pedido
+            if valor_pedido > 0:
+                self._preencher_texto(ID_VALOR_PEDIDO, f"{valor_pedido:.2f}".replace(".", ","))
+            # Risco: Possível
+            self._selecionar_lookup(ID_RISCO_SELECT, ID_RISCO_VALUE, RISCO)
 
             # === PASSO 6: Documentos - Limpar ===
             self._limpar_campo(ID_TIPO_DOC_ARQ_VALUE)

@@ -28,6 +28,7 @@ Private Const ANDAMENTO As String = "PEDIDO DE AJUIZAMENTO DE AÇÃO"
 Private Const PEDIDO As String = "Dívida Previdenciária"
 Private Const RITO As String = "Ordinário"
 Private Const TIPO_PROCESSO As String = "Ativo"
+Private Const RISCO As String = "Possível"
 
 ' === IDs dos campos ASP.NET (Mapa de Campos Benner) ===
 ' Prefixo: ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_
@@ -82,6 +83,9 @@ Private Const ID_ADV_EXTERNO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPID
 ' Pedidos
 Private Const ID_PEDIDO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl213_ctl01_select"
 Private Const ID_PEDIDO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl213_PEDIDO1_VALUE"
+Private Const ID_VALOR_PEDIDO As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_VALORPEDIDO1"
+Private Const ID_RISCO_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl230_ctl01_select"
+Private Const ID_RISCO_VALUE As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl230_RISCOPEDIDO1_VALUE"
 
 ' Documentos (para limpar)
 Private Const ID_TIPO_DOC_ARQ_SELECT As String = "ctl00_Main_WIDGET_CADASTRO_RAPIDO_PageControl_GERAL_GERAL_ctl256_ctl01_select"
@@ -103,6 +107,7 @@ Private Const COL_CNJ As Integer = 31           ' AE - NÚMERO CNJ
 Private Const COL_PLANO_DESC As Integer = 32    ' AF - PLANO DESCRIÇÃO
 Private Const COL_PESQUISA_BENNER As Integer = 33 ' AG - RESULTADO PESQUISA BENNER
 Private Const COL_ID_PASTA As Integer = 34      ' AH - ID PASTA CRIADA
+Private Const COL_VALOR_PEDIDO As Integer = 35   ' AI - VALOR PEDIDO (soma quando agrupado)
 
 ' Advogados internos (seleção aleatória)
 Private Const ADV_INTERNO_1 As String = "EDSON EDUARDO AGUIAR AVELAR"
@@ -129,7 +134,7 @@ Public Sub AnalisePreviaDuplicidades()
     Dim lastRow As Long
     lastRow = wsData.Cells(wsData.Rows.Count, COL_NOME).End(xlUp).Row
 
-    wsData.Range(wsData.Cells(2, COL_ANALISE), wsData.Cells(lastRow, COL_ID_PASTA)).ClearContents
+    wsData.Range(wsData.Cells(2, COL_ANALISE), wsData.Cells(lastRow, COL_VALOR_PEDIDO)).ClearContents
 
     wsData.Cells(1, COL_ANALISE).Value = "ANÁLISE DUPLICIDADE"
     wsData.Cells(1, COL_STATUS).Value = "STATUS CADASTRO"
@@ -137,6 +142,7 @@ Public Sub AnalisePreviaDuplicidades()
     wsData.Cells(1, COL_PLANO_DESC).Value = "PLANO DESCRIÇÃO"
     wsData.Cells(1, COL_PESQUISA_BENNER).Value = "PESQUISA BENNER"
     wsData.Cells(1, COL_ID_PASTA).Value = "ID PASTA BENNER"
+    wsData.Cells(1, COL_VALOR_PEDIDO).Value = "VALOR PEDIDO"
 
     Dim dictNomes As Object
     Set dictNomes = CreateObject("Scripting.Dictionary")
@@ -173,6 +179,8 @@ Public Sub AnalisePreviaDuplicidades()
     Set dictLinhas = CreateObject("Scripting.Dictionary")
     Dim dictContratos As Object ' nome -> "contrato1/contrato2"
     Set dictContratos = CreateObject("Scripting.Dictionary")
+    Dim dictValores As Object ' nome -> soma dos valores da dívida
+    Set dictValores = CreateObject("Scripting.Dictionary")
 
     For i = 2 To lastRow
         nome = UCase(Trim(CStr(wsData.Cells(i, COL_NOME).Value)))
@@ -192,6 +200,15 @@ Public Sub AnalisePreviaDuplicidades()
             If InStr(dictContratos(nome), contrato) = 0 Then
                 dictContratos(nome) = dictContratos(nome) & "/" & contrato
             End If
+        End If
+
+        ' Acumular valor da dívida
+        Dim valDiv As Double
+        valDiv = CDbl(wsData.Cells(i, COL_VALOR_DIVIDA).Value)
+        If Not dictValores.Exists(nome) Then
+            dictValores.Add nome, valDiv
+        Else
+            dictValores(nome) = dictValores(nome) + valDiv
         End If
 SkipLinha:
     Next i
@@ -229,6 +246,8 @@ SkipLinha:
                 If CStr(i) = partes(0) Then
                     wsData.Cells(i, COL_ANALISE).Value = "MESMO PARTICIPANTE - " & (UBound(partes) + 1) & " OPERAÇÕES (AGRUPADO)"
                     wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
+                    ' Valor somado de todas as linhas do participante
+                    wsData.Cells(i, COL_VALOR_PEDIDO).Value = dictValores(nome)
                 Else
                     wsData.Cells(i, COL_ANALISE).Value = "AGRUPADO COM LINHA " & partes(0) & " - PASTA ÚNICA"
                     wsData.Cells(i, COL_STATUS).Value = "AGRUPADO"
@@ -236,6 +255,8 @@ SkipLinha:
             Else
                 wsData.Cells(i, COL_ANALISE).Value = "OK"
                 wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
+                ' Valor individual
+                wsData.Cells(i, COL_VALOR_PEDIDO).Value = dictValores(nome)
             End If
         End If
     Next i
@@ -376,13 +397,18 @@ Public Sub CadastrarPastasBenner()
 
     For i = 2 To lastRow
         If UCase(Trim(CStr(wsData.Cells(i, COL_STATUS).Value))) = "PENDENTE" Then
-            Dim nome As String, contrato As String, valorDivida As Double
+            Dim nome As String, contrato As String, valorPedido As Double
             Dim gerencia As String, uf As String, cpf As String
             Dim filial As String, numeroCNJ As String
 
             nome = Trim(CStr(wsData.Cells(i, COL_NOME).Value))
             contrato = CStr(wsData.Cells(i, COL_CONTRATO).Value)
-            valorDivida = CDbl(wsData.Cells(i, COL_VALOR_DIVIDA).Value)
+            ' Usar valor do COL_VALOR_PEDIDO (já somado na Etapa 1 para agrupados)
+            If IsEmpty(wsData.Cells(i, COL_VALOR_PEDIDO).Value) Or wsData.Cells(i, COL_VALOR_PEDIDO).Value = "" Then
+                valorPedido = CDbl(wsData.Cells(i, COL_VALOR_DIVIDA).Value)
+            Else
+                valorPedido = CDbl(wsData.Cells(i, COL_VALOR_PEDIDO).Value)
+            End If
             gerencia = Trim(CStr(wsData.Cells(i, COL_GERENCIA).Value))
             uf = Trim(CStr(wsData.Cells(i, COL_UF).Value))
             cpf = FormatarCPF(CStr(wsData.Cells(i, COL_CPF).Value))
@@ -404,7 +430,7 @@ Public Sub CadastrarPastasBenner()
             End If
 
             Dim resultado As String
-            resultado = CadastrarPastaCivel(nome, contrato, valorDivida, gerencia, _
+            resultado = CadastrarPastaCivel(nome, contrato, valorPedido, gerencia, _
                                             uf, cpf, filial, numeroCNJ, advInterno, advExterno)
 
             If Left(resultado, 2) = "OK" Then
@@ -448,7 +474,7 @@ End Sub
 ' FUNÇÃO PRINCIPAL - CADASTRAR PASTA CÍVEL (IDs exatos)
 '==============================================================================
 Private Function CadastrarPastaCivel(nome As String, contrato As String, _
-                                      valorDivida As Double, gerencia As String, _
+                                      valorPedido As Double, gerencia As String, _
                                       uf As String, cpf As String, filial As String, _
                                       numeroCNJ As String, advInterno As String, _
                                       advExterno As String) As String
@@ -552,6 +578,12 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
 
     ' === PASSO 5: Pedido ===
     Call SelecionarLookup(doc, ID_PEDIDO_SELECT, ID_PEDIDO_VALUE, PEDIDO)
+    ' Valor Pedido
+    If valorPedido > 0 Then
+        Call PreencherTexto(doc, ID_VALOR_PEDIDO, Replace(Format(valorPedido, "0.00"), ".", ","))
+    End If
+    ' Risco: Possível
+    Call SelecionarLookup(doc, ID_RISCO_SELECT, ID_RISCO_VALUE, RISCO)
 
     ' === PASSO 6: Documentos - Limpar tipo documento e nome "INICIAL" ===
     Call LimparCampo(doc, ID_TIPO_DOC_ARQ_VALUE)
