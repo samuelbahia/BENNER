@@ -491,15 +491,24 @@ Private Function CadastrarPastaCivel(nome As String, contrato As String, _
     If Not btnNovo Is Nothing Then
         btnNovo.Click
         Call AguardarCarregamento
+        ' Espera extra para o submenu renderizar completamente
+        Application.Wait Now + TimeValue("00:00:03")
     Else
         CadastrarPastaCivel = "Botão +Novo não encontrado"
         Exit Function
     End If
 
     Set doc = IE.document
+
+    ' DEBUG: Mostrar texto visível na tela para diagnóstico
+    MsgBox "DEBUG - Texto visível após +Novo (primeiros 500 chars):" & vbCrLf & Left(doc.body.innerText, 500), vbInformation, "Debug"
+
     Dim linkCadRapido As Object
     Set linkCadRapido = BuscarElementoPorTexto(doc, "A", "Cadastro rápido de pasta")
     If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "SPAN", "Cadastro rápido")
+    If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "LI", "Cadastro rápido")
+    If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "DIV", "Cadastro rápido")
+    If linkCadRapido Is Nothing Then Set linkCadRapido = BuscarElementoPorTexto(doc, "BUTTON", "Cadastro rápido")
 
     If Not linkCadRapido Is Nothing Then
         linkCadRapido.Click
