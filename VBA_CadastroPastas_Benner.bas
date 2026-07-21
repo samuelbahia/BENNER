@@ -150,39 +150,93 @@ Public Sub AnalisePreviaDuplicidades()
         End If
     Next i
 
+    ' Detectar duplicatas exatas
     Dim dictExatas As Object
     Set dictExatas = CreateObject("Scripting.Dictionary")
     Dim contrato As String, valor As Double, chave As String
+    Dim dictDupExata As Object
+    Set dictDupExata = CreateObject("Scripting.Dictionary")
 
     For i = 2 To lastRow
         nome = UCase(Trim(CStr(wsData.Cells(i, COL_NOME).Value)))
         contrato = CStr(wsData.Cells(i, COL_CONTRATO).Value)
         valor = CDbl(wsData.Cells(i, COL_VALOR_DIVIDA).Value)
         chave = nome & "|" & contrato & "|" & CStr(valor)
+        If dictExatas.Exists(chave) Then
+            dictDupExata(CStr(i)) = True
+        End If
+        dictExatas(chave) = i
+    Next i
 
-        wsData.Cells(i, COL_CNJ).Value = "DP" & contrato
+    ' Coletar linhas válidas por participante e construir número combinado
+    Dim dictLinhas As Object ' nome -> "row1;row2;..."
+    Set dictLinhas = CreateObject("Scripting.Dictionary")
+    Dim dictContratos As Object ' nome -> "contrato1/contrato2"
+    Set dictContratos = CreateObject("Scripting.Dictionary")
+
+    For i = 2 To lastRow
+        nome = UCase(Trim(CStr(wsData.Cells(i, COL_NOME).Value)))
+        If dictDupExata.Exists(CStr(i)) Then GoTo SkipLinha
+        If Len(Trim(CStr(wsData.Cells(i, COL_BENNER).Value))) > 0 Then GoTo SkipLinha
+
+        If Not dictLinhas.Exists(nome) Then
+            dictLinhas.Add nome, CStr(i)
+        Else
+            dictLinhas(nome) = dictLinhas(nome) & ";" & CStr(i)
+        End If
+
+        contrato = CStr(wsData.Cells(i, COL_CONTRATO).Value)
+        If Not dictContratos.Exists(nome) Then
+            dictContratos.Add nome, contrato
+        Else
+            If InStr(dictContratos(nome), contrato) = 0 Then
+                dictContratos(nome) = dictContratos(nome) & "/" & contrato
+            End If
+        End If
+SkipLinha:
+    Next i
+
+    ' Preencher campos auxiliares
+    For i = 2 To lastRow
+        nome = UCase(Trim(CStr(wsData.Cells(i, COL_NOME).Value)))
+        contrato = CStr(wsData.Cells(i, COL_CONTRATO).Value)
 
         Select Case wsData.Cells(i, COL_PLANO).Value
             Case 1: wsData.Cells(i, COL_PLANO_DESC).Value = "Plano de Benefícios 1"
             Case 2: wsData.Cells(i, COL_PLANO_DESC).Value = "Plano PREVI Futuro"
         End Select
 
-        If dictExatas.Exists(chave) Then
+        If dictDupExata.Exists(CStr(i)) Then
             wsData.Cells(i, COL_ANALISE).Value = "DUPLICATA EXATA - REMOVER"
             wsData.Cells(i, COL_STATUS).Value = "NÃO CADASTRAR"
-        ElseIf dictNomes(nome) > 1 Then
-            wsData.Cells(i, COL_ANALISE).Value = "MESMO PARTICIPANTE - " & dictNomes(nome) & " OPERAÇÕES"
-            wsData.Cells(i, COL_STATUS).Value = "VERIFICAR"
-        Else
-            wsData.Cells(i, COL_ANALISE).Value = "OK"
-            wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
-        End If
-        dictExatas(chave) = i
-
-        If Len(Trim(CStr(wsData.Cells(i, COL_BENNER).Value))) > 0 Then
-            wsData.Cells(i, COL_ANALISE).Value = wsData.Cells(i, COL_ANALISE).Value & _
-                " | JÁ NO BENNER (" & wsData.Cells(i, COL_BENNER).Value & ")"
+            wsData.Cells(i, COL_CNJ).Value = "DP" & contrato
+        ElseIf Len(Trim(CStr(wsData.Cells(i, COL_BENNER).Value))) > 0 Then
+            wsData.Cells(i, COL_ANALISE).Value = "JÁ NO BENNER (" & wsData.Cells(i, COL_BENNER).Value & ")"
             wsData.Cells(i, COL_STATUS).Value = "JÁ CADASTRADO"
+            wsData.Cells(i, COL_CNJ).Value = "DP" & contrato
+        Else
+            Dim numeroCombinado As String
+            numeroCombinado = "DP" & dictContratos(nome)
+            wsData.Cells(i, COL_CNJ).Value = numeroCombinado
+
+            Dim linhasStr As String
+            linhasStr = dictLinhas(nome)
+            Dim partes() As String
+            partes = Split(linhasStr, ";")
+
+            If UBound(partes) > 0 Then
+                ' Múltiplas linhas para este participante
+                If CStr(i) = partes(0) Then
+                    wsData.Cells(i, COL_ANALISE).Value = "MESMO PARTICIPANTE - " & (UBound(partes) + 1) & " OPERAÇÕES (AGRUPADO)"
+                    wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
+                Else
+                    wsData.Cells(i, COL_ANALISE).Value = "AGRUPADO COM LINHA " & partes(0) & " - PASTA ÚNICA"
+                    wsData.Cells(i, COL_STATUS).Value = "AGRUPADO"
+                End If
+            Else
+                wsData.Cells(i, COL_ANALISE).Value = "OK"
+                wsData.Cells(i, COL_STATUS).Value = "PENDENTE"
+            End If
         End If
     Next i
 
@@ -231,7 +285,26 @@ Public Sub VerificarNoBenner()
             wsData.Cells(i, COL_PESQUISA_BENNER).Value = resultadoPesquisa
             pesquisados = pesquisados + 1
 
-            If InStr(UCase(resultadoPesquisa), "ENCONTRADA") > 0 Then
+            If InStr(UCase(resultadoPesquisa), "ENCONTRADA") > 0 And _
+               InStr(UCase(resultadoPesquisa), "NÃO ENCONTRADA") = 0 Then
+                ' Extrair ID da pasta se presente (formato: ...| PASTA:123)
+                If InStr(UCase(resultadoPesquisa), "PASTA:") > 0 Then
+                    Dim posPasta As Long, idExtraido As String
+                    posPasta = InStr(resultadoPesquisa, "PASTA:") + 6
+                    idExtraido = Mid(resultadoPesquisa, posPasta)
+                    ' Limpar caracteres não numéricos
+                    Dim ci As Long
+                    For ci = 1 To Len(idExtraido)
+                        If Not IsNumeric(Mid(idExtraido, ci, 1)) Then
+                            idExtraido = Left(idExtraido, ci - 1)
+                            Exit For
+                        End If
+                    Next ci
+                    If Len(idExtraido) > 0 Then
+                        wsData.Cells(i, COL_ID_PASTA).Value = idExtraido
+                    End If
+                End If
+
                 If InStr(UCase(resultadoPesquisa), "DÍVIDA PREVIDENCIÁRIA") > 0 Or _
                    InStr(UCase(resultadoPesquisa), "DIVIDA PREVIDENCIARIA") > 0 Then
                     wsData.Cells(i, COL_STATUS).Value = "JÁ CADASTRADO NO BENNER"
@@ -309,7 +382,8 @@ Public Sub CadastrarPastasBenner()
             uf = Trim(CStr(wsData.Cells(i, COL_UF).Value))
             cpf = FormatarCPF(CStr(wsData.Cells(i, COL_CPF).Value))
             filial = CStr(wsData.Cells(i, COL_PLANO_DESC).Value)
-            numeroCNJ = "DP" & contrato
+            numeroCNJ = CStr(wsData.Cells(i, COL_CNJ).Value)
+            If Len(numeroCNJ) = 0 Then numeroCNJ = "DP" & contrato
 
             Dim advInterno As String, advExterno As String
             advInterno = SortearAdvogadoInterno()
@@ -330,10 +404,27 @@ Public Sub CadastrarPastasBenner()
 
             If Left(resultado, 2) = "OK" Then
                 wsData.Cells(i, COL_STATUS).Value = "CADASTRADO + ANDAMENTO"
+                Dim idPastaResult As String
+                idPastaResult = ""
                 If Len(resultado) > 3 Then
-                    wsData.Cells(i, COL_ID_PASTA).Value = Mid(resultado, 4)
+                    idPastaResult = Mid(resultado, 4)
+                    wsData.Cells(i, COL_ID_PASTA).Value = idPastaResult
                 End If
                 cadastrados = cadastrados + 1
+                ' Marcar linhas AGRUPADO do mesmo participante
+                Dim j As Long
+                For j = 2 To lastRow
+                    If j <> i Then
+                        If UCase(Trim(CStr(wsData.Cells(j, COL_STATUS).Value))) = "AGRUPADO" Then
+                            If UCase(Trim(CStr(wsData.Cells(j, COL_NOME).Value))) = nomeUpper Then
+                                wsData.Cells(j, COL_STATUS).Value = "CADASTRADO (AGRUPADO)"
+                                If Len(idPastaResult) > 0 Then
+                                    wsData.Cells(j, COL_ID_PASTA).Value = idPastaResult
+                                End If
+                            End If
+                        End If
+                    End If
+                Next j
             Else
                 wsData.Cells(i, COL_STATUS).Value = "ERRO: " & resultado
                 erros = erros + 1
@@ -707,8 +798,8 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
     Dim tabelas As Object
     Set tabelas = doc.getElementsByTagName("TABLE")
     Dim t As Long, r As Long
-    Dim encontrou As Boolean, objetos As String
-    encontrou = False: objetos = ""
+    Dim encontrou As Boolean, objetos As String, idPastaEncontrada As String
+    encontrou = False: objetos = "": idPastaEncontrada = ""
 
     For t = 0 To tabelas.Length - 1
         Dim rows As Object
@@ -718,6 +809,29 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
             rowText = UCase(rows(r).innerText)
             If InStr(rowText, UCase(nomePesquisado)) > 0 Then
                 encontrou = True
+                ' Tentar capturar ID da pasta via link
+                If Len(idPastaEncontrada) = 0 Then
+                    Dim links As Object
+                    Set links = rows(r).getElementsByTagName("A")
+                    Dim lk As Long
+                    For lk = 0 To links.Length - 1
+                        Dim href As String
+                        href = CStr(links(lk).getAttribute("href"))
+                        Dim posId As Long
+                        posId = InStr(href, "id=")
+                        If posId > 0 Then
+                            Dim idStr As String
+                            idStr = Mid(href, posId + 3)
+                            Dim posAmp As Long
+                            posAmp = InStr(idStr, "&")
+                            If posAmp > 0 Then idStr = Left(idStr, posAmp - 1)
+                            If Len(idStr) > 0 And IsNumeric(idStr) Then
+                                idPastaEncontrada = idStr
+                                Exit For
+                            End If
+                        End If
+                    Next lk
+                End If
                 If InStr(rowText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(rowText, "DIVIDA PREVIDENCIARIA") > 0 Then
                     objetos = objetos & "DÍVIDA PREVIDENCIÁRIA; "
                 Else
@@ -730,13 +844,20 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
     Next t
     On Error GoTo 0
 
+    Dim sufixoId As String
+    If Len(idPastaEncontrada) > 0 Then
+        sufixoId = " | PASTA:" & idPastaEncontrada
+    Else
+        sufixoId = ""
+    End If
+
     If encontrou Then
         If InStr(UCase(objetos), "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(UCase(objetos), "DIVIDA PREVIDENCIARIA") > 0 Then
-            LerResultadosPesquisa = "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)"
+            LerResultadosPesquisa = "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)" & sufixoId
         ElseIf Len(objetos) > 0 Then
-            LerResultadosPesquisa = "ENCONTRADA - OUTRO OBJETO: " & Left(objetos, 100)
+            LerResultadosPesquisa = "ENCONTRADA - OUTRO OBJETO: " & Left(objetos, 100) & sufixoId
         Else
-            LerResultadosPesquisa = "ENCONTRADA - objeto não identificado"
+            LerResultadosPesquisa = "ENCONTRADA - objeto não identificado" & sufixoId
         End If
     Else
         Dim bodyText As String

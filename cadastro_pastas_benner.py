@@ -223,22 +223,29 @@ class CadastroPastasBenner:
             for col in range(COL_ANALISE, COL_ID_PASTA + 1):
                 ws.cell(row, col, None)
 
-        # Contar ocorrências de nomes
-        nomes_count: dict[str, int] = {}
+        # Agrupar por participante: coletar contratos por nome
+        participante_linhas: dict[str, list[int]] = {}
         for row in range(2, last_row + 1):
             nome = str(ws.cell(row, COL_NOME).value or "").strip().upper()
-            nomes_count[nome] = nomes_count.get(nome, 0) + 1
+            if nome:
+                participante_linhas.setdefault(nome, []).append(row)
 
-        # Detectar duplicatas exatas e preencher campos auxiliares
+        # Detectar duplicatas exatas
         chaves_vistas: set[str] = set()
+        duplicatas_exatas: set[int] = set()
         for row in range(2, last_row + 1):
             nome = str(ws.cell(row, COL_NOME).value or "").strip().upper()
             contrato = str(ws.cell(row, COL_CONTRATO).value or "")
             valor = float(ws.cell(row, COL_VALOR_DIVIDA).value or 0)
             chave = f"{nome}|{contrato}|{valor}"
+            if chave in chaves_vistas:
+                duplicatas_exatas.add(row)
+            chaves_vistas.add(chave)
 
-            # Número CNJ
-            ws.cell(row, COL_CNJ, f"DP{contrato}")
+        # Preencher campos auxiliares e agrupar contratos
+        for row in range(2, last_row + 1):
+            nome = str(ws.cell(row, COL_NOME).value or "").strip().upper()
+            contrato = str(ws.cell(row, COL_CONTRATO).value or "")
 
             # Plano descrição
             plano = ws.cell(row, COL_PLANO).value
@@ -247,24 +254,46 @@ class CadastroPastasBenner:
             elif plano == 2:
                 ws.cell(row, COL_PLANO_DESC, "Plano PREVI Futuro")
 
-            # Análise de duplicidade
-            if chave in chaves_vistas:
-                ws.cell(row, COL_ANALISE, "DUPLICATA EXATA - REMOVER")
-                ws.cell(row, COL_STATUS, "NÃO CADASTRAR")
-            elif nomes_count.get(nome, 0) > 1:
-                ws.cell(row, COL_ANALISE, f"MESMO PARTICIPANTE - {nomes_count[nome]} OPERAÇÕES")
-                ws.cell(row, COL_STATUS, "VERIFICAR")
-            else:
-                ws.cell(row, COL_ANALISE, "OK")
-                ws.cell(row, COL_STATUS, "PENDENTE")
-            chaves_vistas.add(chave)
-
             # Verificar se já está no Benner
             benner_val = str(ws.cell(row, COL_BENNER).value or "").strip()
-            if benner_val:
-                analise_atual = str(ws.cell(row, COL_ANALISE).value or "")
-                ws.cell(row, COL_ANALISE, f"{analise_atual} | JÁ NO BENNER ({benner_val})")
+
+            if row in duplicatas_exatas:
+                ws.cell(row, COL_ANALISE, "DUPLICATA EXATA - REMOVER")
+                ws.cell(row, COL_STATUS, "NÃO CADASTRAR")
+                ws.cell(row, COL_CNJ, f"DP{contrato}")
+            elif benner_val:
+                ws.cell(row, COL_ANALISE, f"JÁ NO BENNER ({benner_val})")
                 ws.cell(row, COL_STATUS, "JÁ CADASTRADO")
+                ws.cell(row, COL_CNJ, f"DP{contrato}")
+            else:
+                linhas_participante = participante_linhas.get(nome, [])
+                # Filtrar linhas válidas (excluir duplicatas exatas e já cadastrados)
+                linhas_validas = [r for r in linhas_participante
+                                  if r not in duplicatas_exatas
+                                  and not str(ws.cell(r, COL_BENNER).value or "").strip()]
+
+                if len(linhas_validas) > 1:
+                    # Mesmo participante, múltiplos contratos
+                    contratos = [str(ws.cell(r, COL_CONTRATO).value or "") for r in linhas_validas]
+                    contratos_unicos = list(dict.fromkeys(contratos))  # preservar ordem, remover duplicados
+                    numero_combinado = "DP" + "/".join(contratos_unicos)
+
+                    if row == linhas_validas[0]:
+                        # Primeira linha: PENDENTE, recebe número combinado
+                        ws.cell(row, COL_ANALISE,
+                                f"MESMO PARTICIPANTE - {len(linhas_validas)} OPERAÇÕES (AGRUPADO)")
+                        ws.cell(row, COL_STATUS, "PENDENTE")
+                        ws.cell(row, COL_CNJ, numero_combinado)
+                    else:
+                        # Demais linhas: agrupadas com a primeira
+                        ws.cell(row, COL_ANALISE,
+                                f"AGRUPADO COM LINHA {linhas_validas[0]} - PASTA ÚNICA")
+                        ws.cell(row, COL_STATUS, "AGRUPADO")
+                        ws.cell(row, COL_CNJ, numero_combinado)
+                else:
+                    ws.cell(row, COL_ANALISE, "OK")
+                    ws.cell(row, COL_STATUS, "PENDENTE")
+                    ws.cell(row, COL_CNJ, f"DP{contrato}")
 
         self.salvar_planilha()
         total = last_row - 1
@@ -305,7 +334,15 @@ class CadastroPastasBenner:
             pesquisados += 1
 
             resultado_upper = resultado.upper()
-            if "ENCONTRADA" in resultado_upper:
+            if "ENCONTRADA" in resultado_upper and "NÃO ENCONTRADA" not in resultado_upper:
+                # Extrair ID da pasta se presente no resultado (formato: ...| PASTA:123)
+                id_encontrado = ""
+                if "PASTA:" in resultado_upper:
+                    m = re.search(r"PASTA:(\d+)", resultado)
+                    if m:
+                        id_encontrado = m.group(1)
+                        ws.cell(row, COL_ID_PASTA, id_encontrado)
+
                 if "DÍVIDA PREVIDENCIÁRIA" in resultado_upper or "DIVIDA PREVIDENCIARIA" in resultado_upper:
                     ws.cell(row, COL_STATUS, "JÁ CADASTRADO NO BENNER")
                     ja_existentes += 1
@@ -363,7 +400,7 @@ class CadastroPastasBenner:
             uf = str(ws.cell(row, COL_UF).value or "").strip()
             cpf = self._formatar_cpf(str(ws.cell(row, COL_CPF).value or ""))
             filial = str(ws.cell(row, COL_PLANO_DESC).value or "")
-            numero_cnj = f"DP{contrato}"
+            numero_cnj = str(ws.cell(row, COL_CNJ).value or f"DP{contrato}")
 
             adv_interno = random.choice(ADVOGADOS_INTERNOS)
             nome_upper = nome.upper()
@@ -380,9 +417,21 @@ class CadastroPastasBenner:
 
             if resultado.startswith("OK"):
                 ws.cell(row, COL_STATUS, "CADASTRADO + ANDAMENTO")
+                id_pasta = ""
                 if "|" in resultado:
-                    ws.cell(row, COL_ID_PASTA, resultado.split("|", 1)[1])
+                    id_pasta = resultado.split("|", 1)[1]
+                    ws.cell(row, COL_ID_PASTA, id_pasta)
                 cadastrados += 1
+                # Marcar linhas AGRUPADO do mesmo participante
+                for r2 in range(2, last_row + 1):
+                    if r2 == row:
+                        continue
+                    if str(ws.cell(r2, COL_STATUS).value or "").strip().upper() == "AGRUPADO":
+                        nome2 = str(ws.cell(r2, COL_NOME).value or "").strip().upper()
+                        if nome2 == nome.upper():
+                            ws.cell(r2, COL_STATUS, "CADASTRADO (AGRUPADO)")
+                            if id_pasta:
+                                ws.cell(r2, COL_ID_PASTA, id_pasta)
             else:
                 ws.cell(row, COL_STATUS, f"ERRO: {resultado}")
                 erros += 1
@@ -650,6 +699,7 @@ class CadastroPastasBenner:
             tables = self.driver.find_elements(By.TAG_NAME, "table")
             encontrou = False
             objetos = ""
+            id_pasta_encontrada = ""
 
             for table in tables:
                 try:
@@ -658,6 +708,15 @@ class CadastroPastasBenner:
                         row_text = tr.text.upper()
                         if nome_pesquisado.upper() in row_text:
                             encontrou = True
+                            # Tentar capturar ID da pasta via link na linha
+                            if not id_pasta_encontrada:
+                                links = tr.find_elements(By.TAG_NAME, "a")
+                                for link in links:
+                                    href = link.get_attribute("href") or ""
+                                    m = re.search(r"id=(\d+)", href)
+                                    if m:
+                                        id_pasta_encontrada = m.group(1)
+                                        break
                             if "DÍVIDA PREVIDENCIÁRIA" in row_text or "DIVIDA PREVIDENCIARIA" in row_text:
                                 objetos += "DÍVIDA PREVIDENCIÁRIA; "
                             else:
@@ -667,13 +726,15 @@ class CadastroPastasBenner:
                 except StaleElementReferenceException:
                     continue
 
+            sufixo_id = f" | PASTA:{id_pasta_encontrada}" if id_pasta_encontrada else ""
+
             if encontrou:
                 if "DÍVIDA PREVIDENCIÁRIA" in objetos.upper() or "DIVIDA PREVIDENCIARIA" in objetos.upper():
-                    return "ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA)"
+                    return f"ENCONTRADA - MESMO OBJETO (DÍVIDA PREVIDENCIÁRIA){sufixo_id}"
                 elif objetos:
-                    return f"ENCONTRADA - OUTRO OBJETO: {objetos[:100]}"
+                    return f"ENCONTRADA - OUTRO OBJETO: {objetos[:100]}{sufixo_id}"
                 else:
-                    return "ENCONTRADA - objeto não identificado"
+                    return f"ENCONTRADA - objeto não identificado{sufixo_id}"
             else:
                 if "NENHUM REGISTRO" in body_text or "NÃO ENCONTR" in body_text:
                     return "NÃO ENCONTRADA - OK para cadastrar"
