@@ -951,8 +951,14 @@ def main():
     """Ponto de entrada - executa as 3 etapas em sequência."""
     import sys
 
+    # Diretório de trabalho onde ficam a planilha e o script
+    DIRETORIO_TRABALHO = Path(r"K:\BennerData\CadastraPastas")
+
     # Caminho padrão da planilha (pode ser passado como argumento)
-    arquivo = sys.argv[1] if len(sys.argv) > 1 else "Ajuizamento+2024+2+parte+ (2) -Planilha original.xlsx"
+    if len(sys.argv) > 1:
+        arquivo = sys.argv[1]
+    else:
+        arquivo = str(DIRETORIO_TRABALHO / "Ajuizamento+2024+2+parte+ (2) -Planilha original.xlsx")
 
     if not Path(arquivo).exists():
         print(f"ERRO: Arquivo não encontrado: {arquivo}")
