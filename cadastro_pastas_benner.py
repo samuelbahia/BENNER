@@ -661,8 +661,10 @@ class CadastroPastasBenner:
     # PESQUISA NO BENNER
     # ==========================================================================
     def _pesquisar_parte_pasta(self, nome: str) -> str:
-        """Pesquisa participante em Pastas > Parte Pasta."""
+        """Pesquisa participante em Pastas > Parte Pasta (campo select2)."""
         try:
+            wait = WebDriverWait(self.driver, 15)
+
             # Navegar para Pastas se necessário
             menu_pastas = self._buscar_elemento_por_texto("a", "Pastas")
             if not menu_pastas:
@@ -671,43 +673,57 @@ class CadastroPastasBenner:
                 menu_pastas.click()
                 self._aguardar_carregamento()
 
-            # Buscar campo Parte Pasta
-            campo_parte = self._buscar_campo_por_label("Parte Pasta")
-            if not campo_parte:
-                campo_parte = self._buscar_input_por_atributo("placeholder", "Parte")
-            if not campo_parte:
-                campo_parte = self._buscar_input_por_atributo("title", "Parte")
-            if not campo_parte:
-                return "ERRO: Campo não encontrado"
+            # Campo Parte Pasta é um select2 (data-fieldname='PARTEPASTA')
+            container_xpath = ("//select[@data-fieldname='PARTEPASTA']"
+                               "/ancestor::div[contains(@class,'input-group')]")
 
-            campo_parte.clear()
-            campo_parte.send_keys(nome)
-            self.driver.execute_script(
-                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", campo_parte
-            )
-            self.driver.execute_script(
-                "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));", campo_parte
-            )
+            # Clicar na caixa do select2 para abrir o campo
+            caixa = wait.until(EC.presence_of_element_located(
+                (By.XPATH, container_xpath + "//span[contains(@class,'select2-selection')]")))
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", caixa)
+            caixa.click()
 
-            # Pesquisar
-            btn_pesquisar = self._buscar_elemento_por_texto("button", "Pesquisar")
-            if not btn_pesquisar:
-                btn_pesquisar = self._buscar_elemento_por_texto("a", "Pesquisar")
-            if btn_pesquisar:
-                btn_pesquisar.click()
-            else:
-                campo_parte.send_keys(Keys.ENTER)
+            # Digitar no input de busca do select2
+            campo = wait.until(EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "input.select2-search__field")))
+            campo.clear()
+            campo.send_keys(nome)
+
+            # Aguardar autocomplete e selecionar primeiro resultado
+            try:
+                opcao = wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "li.select2-results__option")))
+                opcao.click()
+            except TimeoutException:
+                campo.send_keys(Keys.ENTER)  # fallback
+
+            # Clicar em Filtrar (lupa)
+            try:
+                self.driver.find_element(By.XPATH, "//a[contains(@id,'FilterButton')]").click()
+            except NoSuchElementException:
+                btn_pesquisar = self._buscar_elemento_por_texto("button", "Pesquisar")
+                if not btn_pesquisar:
+                    btn_pesquisar = self._buscar_elemento_por_texto("a", "Pesquisar")
+                if btn_pesquisar:
+                    btn_pesquisar.click()
+                else:
+                    campo.send_keys(Keys.ENTER)
+
             self._aguardar_carregamento()
             time.sleep(2)
 
             # Ler resultados
             resultado = self._ler_resultados_pesquisa(nome)
 
-            # Limpar campo
+            # Limpar campo (tentar resetar o select2)
             try:
-                campo_parte = self._buscar_campo_por_label("Parte Pasta")
-                if campo_parte:
-                    campo_parte.clear()
+                caixa_reset = self.driver.find_element(
+                    By.XPATH, container_xpath + "//span[contains(@class,'select2-selection')]")
+                self.driver.execute_script(
+                    "var sel = arguments[0].closest('.input-group').querySelector('select');"
+                    "if(sel){$(sel).val(null).trigger('change');}",
+                    caixa_reset
+                )
             except Exception:
                 pass
 
