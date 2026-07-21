@@ -877,12 +877,16 @@ Private Function LerResultadosPesquisa(doc As Object, nomePesquisado As String) 
                         End If
                     Next lk
                 End If
-                If InStr(rowText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(rowText, "DIVIDA PREVIDENCIARIA") > 0 Then
+                ' Verificar coluna Pedido (segunda célula) especificamente
+                Dim cellsObj As Object
+                Set cellsObj = rows(r).getElementsByTagName("TD")
+                Dim pedidoText As String
+                pedidoText = ""
+                If cellsObj.Length > 1 Then pedidoText = UCase(Trim(cellsObj(1).innerText))
+                If InStr(pedidoText, "DÍVIDA PREVIDENCIÁRIA") > 0 Or InStr(pedidoText, "DIVIDA PREVIDENCIARIA") > 0 Then
                     objetos = objetos & "DÍVIDA PREVIDENCIÁRIA; "
-                Else
-                    Dim cellsObj As Object
-                    Set cellsObj = rows(r).getElementsByTagName("TD")
-                    If cellsObj.Length > 1 Then objetos = objetos & Left(cellsObj(1).innerText, 50) & "; "
+                ElseIf cellsObj.Length > 1 Then
+                    objetos = objetos & Left(cellsObj(1).innerText, 50) & "; "
                 End If
             End If
         Next r

@@ -749,12 +749,13 @@ class CadastroPastasBenner:
                                     if m:
                                         id_pasta_encontrada = m.group(1)
                                         break
-                            if "DÍVIDA PREVIDENCIÁRIA" in row_text or "DIVIDA PREVIDENCIARIA" in row_text:
+                            # Verificar coluna Pedido (segunda célula) especificamente
+                            cells = tr.find_elements(By.TAG_NAME, "td")
+                            pedido_text = cells[1].text.upper().strip() if len(cells) > 1 else ""
+                            if "DÍVIDA PREVIDENCIÁRIA" in pedido_text or "DIVIDA PREVIDENCIARIA" in pedido_text:
                                 objetos += "DÍVIDA PREVIDENCIÁRIA; "
-                            else:
-                                cells = tr.find_elements(By.TAG_NAME, "td")
-                                if len(cells) > 1:
-                                    objetos += cells[1].text[:50] + "; "
+                            elif len(cells) > 1:
+                                objetos += cells[1].text[:50] + "; "
                 except StaleElementReferenceException:
                     continue
 
