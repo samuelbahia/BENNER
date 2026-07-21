@@ -344,7 +344,10 @@ class CadastroPastasBenner:
                         ws.cell(row, COL_ID_PASTA, id_encontrado)
 
                 if "DÍVIDA PREVIDENCIÁRIA" in resultado_upper or "DIVIDA PREVIDENCIARIA" in resultado_upper:
-                    ws.cell(row, COL_STATUS, "JÁ CADASTRADO NO BENNER")
+                    status_text = "JÁ CADASTRADO NO BENNER"
+                    if id_encontrado:
+                        status_text += f" (PASTA:{id_encontrado})"
+                    ws.cell(row, COL_STATUS, status_text)
                     ja_existentes += 1
                 else:
                     analise_atual = str(ws.cell(row, COL_ANALISE).value or "")
@@ -887,7 +890,7 @@ class CadastroPastasBenner:
                 stats["cadastrados"] += 1
             elif st == "NÃO CADASTRAR":
                 stats["duplicatas"] += 1
-            elif st in ("JÁ CADASTRADO", "JÁ CADASTRADO NO BENNER"):
+            elif st.startswith("JÁ CADASTRADO"):
                 stats["ja_cadastrados"] += 1
             elif st == "VERIFICAR":
                 stats["verificar"] += 1

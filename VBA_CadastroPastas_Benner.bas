@@ -307,7 +307,12 @@ Public Sub VerificarNoBenner()
 
                 If InStr(UCase(resultadoPesquisa), "DÍVIDA PREVIDENCIÁRIA") > 0 Or _
                    InStr(UCase(resultadoPesquisa), "DIVIDA PREVIDENCIARIA") > 0 Then
-                    wsData.Cells(i, COL_STATUS).Value = "JÁ CADASTRADO NO BENNER"
+                    Dim statusText As String
+                    statusText = "JÁ CADASTRADO NO BENNER"
+                    If Len(idExtraido) > 0 Then
+                        statusText = statusText & " (PASTA:" & idExtraido & ")"
+                    End If
+                    wsData.Cells(i, COL_STATUS).Value = statusText
                     jaExistentes = jaExistentes + 1
                 Else
                     wsData.Cells(i, COL_ANALISE).Value = wsData.Cells(i, COL_ANALISE).Value & " | PASTA EXISTENTE OUTRO OBJETO"
@@ -1040,10 +1045,13 @@ Public Sub GerarRelatorioStatus()
             Case "PENDENTE": pendentes = pendentes + 1
             Case "CADASTRADO", "CADASTRADO + ANDAMENTO": cadastrados = cadastrados + 1
             Case "NÃO CADASTRAR": duplicatas = duplicatas + 1
-            Case "JÁ CADASTRADO", "JÁ CADASTRADO NO BENNER": jaCadastrados = jaCadastrados + 1
             Case "VERIFICAR": verificar = verificar + 1
             Case Else
-                If InStr(st, "ERRO") > 0 Then erros = erros + 1
+                If InStr(st, "JÁ CADASTRADO") > 0 Then
+                    jaCadastrados = jaCadastrados + 1
+                ElseIf InStr(st, "ERRO") > 0 Then
+                    erros = erros + 1
+                End If
         End Select
     Next i
 
