@@ -1,0 +1,28 @@
+[2026-08-07 17:40:03] Planilha carregada: K:\BennerData\CadastraPastas\Ajuizamento+2024+2+parte+ (2) -Planilha original.xlsx [Planilha1]
+[2026-08-07 17:40:03] Cadastrando 1 pastas (Playwright)...
+[2026-08-07 17:40:04] Conectando ao Edge debug http://127.0.0.1:9222 ...
+[2026-08-07 17:40:04] Aba inicial: https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIO
+[2026-08-07 17:40:08]     [select2] CATEGORIA FALHOU: Locator.scroll_into_view_if_needed: Element is not attached to the DOM
+Call log:
+  - attempting scroll into view action
+
+[2026-08-07 17:40:09]     [categoria] Civel nao commitou (tent 1); repetindo...
+[2026-08-07 17:40:09]     [select2] CATEGORIA FALHOU: Locator.scroll_into_view_if_needed: Element is not attached to the DOM
+Call log:
+  - attempting scroll into view action
+
+[2026-08-07 17:40:10]     [categoria] Civel nao commitou (tent 2); repetindo...
+[2026-08-07 17:40:10]     [select2] CATEGORIA FALHOU: Locator.scroll_into_view_if_needed: Element is not attached to the DOM
+Call log:
+  - attempting scroll into view action
+
+[2026-08-07 17:40:11]     [categoria] Civel nao commitou (tent 3); repetindo...
+[2026-08-07 17:40:11]     [select2] CATEGORIA FALHOU: Locator.scroll_into_view_if_needed: Element is not attached to the DOM
+Call log:
+  - attempting scroll into view action
+
+[2026-08-07 17:40:12]     [categoria] OK acionado (__doPostBack).
+[2026-08-07 17:42:20]     [form] aba do formulário real não apareceu.
+[2026-08-07 17:42:20]     [NETHOOK] dump: K:\BennerData\CadastraPastas\diagnostico_rede\20260807_174220_form_nao_apareceu.json (eventos=0)
+[2026-08-07 17:42:20]   [linha 6] ALDA ROSANGELA MULLER CERCATO: não chegou ao form real.
+[2026-08-07 17:42:20] Concluído! Sucesso: 0, Erros: 1
