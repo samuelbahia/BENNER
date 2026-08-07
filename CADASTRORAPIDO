@@ -1,6 +1,5 @@
 PS K:\BennerData\CadastraPastas> py cadastro_pastas_benner_playwright.py
-  File "K:\BennerData\CadastraPastas\cadastro_pastas_benner_playwright.py", line 326
-    f.write(linha + "
-                    ^
-SyntaxError: unterminated string literal (detected at line 326)
-PS K:\BennerData\CadastraPastas>
+  File "K:\BennerData\CadastraPastas\cadastro_pastas_benner_playwright.py", line 590
+    print("
+          ^
+SyntaxError: unterminated string literal (detected at line 590)
