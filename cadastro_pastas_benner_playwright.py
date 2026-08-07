@@ -6,24 +6,6 @@ CADASTRO DE PASTAS BENNER (PREVI JURÍDICO) — versão PLAYWRIGHT
 Reescrita focada em ESTABILIDADE (Anti-Timeout) e DESCOBERTA DE API.
 ================================================================================
 Parecer PAR.0000871/26 - Ajuizamento dívidas prev. 2024 Parte 2
-
-Esta versão remove o uso da tecla "Escape" (que causava o fechamento/cancelamento
-do formulário no Benner WebForms, gerando a cascata de erros "não encontrado").
-Além disso, adiciona mecanismos para capturar e imprimir as opções da API
-carregadas no Select2 (Descoberta de API) para facilitar a resolução de problemas
-onde o texto procurado diverge do retornado pelo Benner.
-
-MENU:
-  1 - Etapa 1: Análise prévia de duplicidades (Python puro, sem navegador)
-  3 - Etapa 3: Cadastrar pastas (PLAYWRIGHT — attach ao Edge debug 9222)
-  4 - Relatório
-  9 - Sair
-
-MODO DE CONEXÃO (attach):
-  1) Feche o Edge. 2) Rode abrir_edge_debug.bat (porta 9222). 3) Faça LOGIN no
-  Benner. 4) Rode: py cadastro_pastas_benner_playwright.py  -> opção 3.
-
-PRÉ-REQUISITO:  py -m pip install playwright openpyxl
 ================================================================================
 """
 import asyncio
@@ -39,11 +21,8 @@ import openpyxl
 from playwright.async_api import async_playwright, TimeoutError as PWTimeout
 
 CDP_URL = os.environ.get("BENNER_CDP_URL", "http://127.0.0.1:9222")
-MARK_CATEGORIA = "cadastrorapidomanual"      # aba do seletor de categoria
-MARK_FORM      = "pr_cadastrorapidopasta"    # aba do formulário real
-
-# ==============================================================================
-URL_BENNER = "https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIOPREVI&m=MAIN"
+MARK_CATEGORIA = "cadastrorapidomanual"
+MARK_FORM      = "pr_cadastrorapidopasta"
 
 CATEGORIA = "Cível"
 CAUSA_PEDIR = "Previdencial"
@@ -108,7 +87,7 @@ class CadastroPastasBennerPW:
         print(linha)
         try:
             with open(self._log_path, "a", encoding="utf-8") as f:
-                f.write(linha + "\n")
+                f.write(linha + "\\n")
         except Exception: pass
 
     def carregar_planilha(self):
@@ -121,8 +100,7 @@ class CadastroPastasBennerPW:
         self.wb.save(str(self.arquivo_excel))
         self._log("Planilha salva.")
 
-    # [Etapas 1 e 4 Omitidas por brevidade; idênticas à V90]
-    def analise_previa_duplicidades(self): self._log("Por favor use a opção 1 original. Esta versão foca no fluxo PW."); return 0
+    def analise_previa_duplicidades(self): self._log("Por favor use a opção 1 original."); return 0
     def gerar_relatorio(self): pass
 
     async def _instalar_hook_rede(self, page):
@@ -134,7 +112,7 @@ class CadastroPastasBennerPW:
             if(window.__netcap.events.length>3000) window.__netcap.events.shift(); }catch(e){} }
           const _fetch = window.fetch;
           window.fetch = async function(input, init){
-            const t0=Date.now(); let url='',method='GET',body='';
+            const t0=Date.now(); let url='',method='GET';
             try{ url=(typeof input==='string')?input:(input&&input.url?input.url:'');
               method=(init&&init.method)?String(init.method).toUpperCase():'GET'; }catch(e){}
             try{ const r=await _fetch.apply(this,arguments);
@@ -155,10 +133,9 @@ class CadastroPastasBennerPW:
     async def _dump_hook(self, page, nome="save_ruim"):
         try:
             events = await page.evaluate("() => (window.__netcap && window.__netcap.events) ? window.__netcap.events : []")
-            # DESCOBERTA DE API (Mostra as URLs chamadas em tempo real)
             apis = [e['url'] for e in events if e.get('url') and ('api/' in e['url'].lower() or 'search' in e['url'].lower())]
             if apis:
-                self._log(f"    [API DISCOVERY] Chamadas detectadas recentemente: {list(set(apis))[-3:]}")
+                self._log(f"    [API DISCOVERY] Chamadas recentes: {list(set(apis))[-3:]}")
             return events
         except Exception: return []
 
@@ -181,7 +158,6 @@ class CadastroPastasBennerPW:
             await asyncio.sleep(1)
         return None
 
-    # NOVO SELECT2 (Forte, sem tecla Escape, com Extração de Opções)
     async def _sel2(self, page, fieldname, texto, espera=True, timeout=12000):
         if not texto: return False
         try:
@@ -189,20 +165,18 @@ class CadastroPastasBennerPW:
             try:
                 await sel.wait_for(state="attached", timeout=4000)
             except PWTimeout:
-                self._log(f"    [select2] Campo {fieldname} não encontrado no DOM. Pode estar oculto ou layout mudou.")
+                self._log(f"    [select2] Campo {fieldname} não encontrado no DOM.")
                 return False
 
-            # Validar se o select original está desabilitado
             is_disabled = await sel.evaluate("el => el.disabled || el.getAttribute('readonly') === 'readonly'")
             if is_disabled:
-                self._log(f"    [select2] {fieldname} está DESABILITADO/READONLY no sistema. Ignorando.")
-                return True # Retorna True pois não é um "erro" nosso, é restrição da tela.
+                self._log(f"    [select2] {fieldname} está DESABILITADO/READONLY. Ignorando.")
+                return True
 
             cont = sel.locator('xpath=following-sibling::*[contains(@class,"select2")][1]')
             await cont.wait_for(state="visible", timeout=4000)
             await cont.scroll_into_view_if_needed()
 
-            # Força o clique no selection para abrir (ou fechar se estiver bugado)
             selection = cont.locator(".select2-selection").first
             try:
                 if await selection.count() and await selection.is_visible():
@@ -210,37 +184,30 @@ class CadastroPastasBennerPW:
                 else:
                     await cont.click(force=True)
             except Exception as e:
-                self._log(f"    [select2] Erro ao clicar no container {fieldname}: {e}")
+                self._log(f"    [select2] Erro clique container {fieldname}: {e}")
                 return False
 
             await page.wait_for_timeout(500)
 
-            # Procura pelo input de busca no form aberto
             busca = page.locator(".select2-dropdown input.select2-search__field, .select2-container--open input.select2-search__field").first
             if await busca.count() > 0 and await busca.is_visible():
                 await busca.fill("")
                 termo = _termo_busca(texto)
                 await busca.type(termo, delay=30)
                 await page.wait_for_timeout(1000)
-            else:
-                pass # Alguns combos Benner não possuem barra de busca (são apenas listas)
 
             base = page.locator(".select2-results").last
-            
-            # Aguarda a mensagem de loading desaparecer
             try:
                 await base.locator("li.loading-results").wait_for(state="hidden", timeout=5000)
             except: pass
 
-            # Descoberta de API: Verifica se retornou 'Nenhum resultado'
             no_results = base.locator("li.select2-results__message").first
             if await no_results.count() > 0 and await no_results.is_visible():
                 msg = await no_results.inner_text()
                 self._log(f"    [select2] {fieldname} API retornou: '{msg}' ao buscar '{termo}'")
-                await page.locator('body').click(position={'x': 10, 'y': 10}, force=True) # Fecha via click
+                await page.locator('body').click(position={'x': 10, 'y': 10}, force=True)
                 return False
 
-            # Captura todas as opções retornadas pela API para log (API Discovery)
             try:
                 await base.locator("li.select2-results__option:not(.select2-results__message)").first.wait_for(state="visible", timeout=8000)
                 opcoes_disponiveis = await base.locator("li.select2-results__option:not(.select2-results__message)").all_inner_texts()
@@ -251,7 +218,6 @@ class CadastroPastasBennerPW:
                 await page.locator('body').click(position={'x': 10, 'y': 10}, force=True)
                 return False
 
-            # Match de texto
             opt = base.locator("li.select2-results__option", has_text=re.compile(re.escape(texto), re.IGNORECASE)).first
             if await opt.count() == 0:
                 pref = texto.split()[0][:8] if texto.split() else texto[:8]
@@ -264,11 +230,9 @@ class CadastroPastasBennerPW:
                     await opt.scroll_into_view_if_needed()
                     await opt.click(force=True)
                 else:
-                    self._log(f"    [select2] {fieldname} Opção escolhida sumiu.")
                     await page.locator('body').click(position={'x': 10, 'y': 10}, force=True)
                     return False
-            except Exception as e:
-                self._log(f"    [select2] Erro clique em {fieldname}: {e}")
+            except Exception:
                 await page.locator('body').click(position={'x': 10, 'y': 10}, force=True)
                 return False
 
@@ -276,10 +240,8 @@ class CadastroPastasBennerPW:
             self._log(f"    [select2] {fieldname} = '{texto[:30]}' OK.")
             return True
         except Exception as e:
-            self._log(f"    [select2] {fieldname} FALHA CRÍTICA: {str(e)[:120]}")
-            # CLICAR FORA para fechar o modal aberto. NUNCA pressionar Escape, ele fecha o form pai!
-            try:
-                await page.locator('body').click(position={'x': 10, 'y': 10}, force=True)
+            self._log(f"    [select2] {fieldname} FALHA: {str(e)[:120]}")
+            try: await page.locator('body').click(position={'x': 10, 'y': 10}, force=True)
             except: pass
             return False
 
@@ -319,9 +281,8 @@ class CadastroPastasBennerPW:
         try:
             rid = await page.evaluate(js, {"termos": list(termos), "label": label})
             if rid in ("sem-pergunta", "sem-radio", "RID"):
-                self._log(f"    [radio] {termos}='{label}': {rid}")
                 return False
-            esc = re.sub(r'([^a-zA-Z0-9_\-])', r'\\', rid)
+            esc = re.sub(r'([^a-zA-Z0-9_\-])', r'\\ ', rid)
             r = page.locator(f'#{esc}')
             await r.scroll_into_view_if_needed()
             try:
@@ -330,11 +291,8 @@ class CadastroPastasBennerPW:
                 else: await r.click(force=True)
             except Exception: await r.click(force=True)
             await self._esperar_rede(page)
-            self._log(f"    [radio] {termos}='{label}': OK.")
             return True
-        except Exception as e:
-            self._log(f"    [radio] {termos}='{label}' erro: {e}")
-            return False
+        except Exception: return False
 
     async def _blocos_part(self, page):
         js = """()=>{const c=(p,e)=>{const o=[];document.querySelectorAll('select[data-fieldname]').forEach(s=>{
@@ -364,9 +322,7 @@ class CadastroPastasBennerPW:
                 cat = home
             except Exception: cat = None
         
-        if cat is None:
-            self._log("    [categoria] aba/seletor não apareceu.")
-            return None
+        if cat is None: return None
         
         await cat.bring_to_front()
         await self._sel2(cat, "CATEGORIA", CATEGORIA, espera=False)
@@ -382,18 +338,15 @@ class CadastroPastasBennerPW:
                     return (s.value && s.value!=='' && s.value!=='-1'); }
             """)
             if commit: break
-            self._log(f"    [categoria] Civel nao commitou (tent {_tent+1}); repetindo...")
             await self._sel2(cat, "CATEGORIA", CATEGORIA, espera=False)
             await cat.wait_for_timeout(800)
         
         try:
             await cat.evaluate("() => { __doPostBack('ctl00$Main$TV_CADASTRORAPIDOMANUAL_FORM','Save'); }")
-            self._log("    [categoria] OK acionado (__doPostBack).")
-        except Exception as e:
-            self._log(f"    [categoria] __doPostBack falhou: {e}; tentando botao visivel...")
+        except Exception:
             for nome_ok in ("Ok", "OK", "Confirmar"):
                 try:
-                    ok = cat.get_by_role("link", name=re.compile(rf"^\s*{nome_ok}\s*$", re.I)).first
+                    ok = cat.get_by_role("link", name=re.compile(rf"^\\s*{nome_ok}\\s*$", re.I)).first
                     if await ok.count():
                         await ok.click(); break
                 except Exception: pass
@@ -406,12 +359,9 @@ class CadastroPastasBennerPW:
                 form = cat
             except Exception: form = None
         
-        if form is None:
-            self._log("    [form] aba do formulário real não apareceu.")
-            return None
+        if form is None: return None
             
         await form.bring_to_front()
-        self._log(f"    [conn] form real: {form.url[:60]}")
         await self._instalar_hook_rede(form)
         return form
 
@@ -427,8 +377,7 @@ class CadastroPastasBennerPW:
 
         await self._sel2(page, "TIPO", "COBRANÇA")
         await page.wait_for_timeout(1500)
-        
-        await self._dump_hook(page) # Debug API requests during fill
+        await self._dump_hook(page)
         
         await self._sel2(page, "ASSUNTO", "PREVIDENCIAL")
         await self._sel2(page, "CAUSARAIZ", "Produto")
@@ -458,7 +407,6 @@ class CadastroPastasBennerPW:
         await self._texto(page, "DATADISTRIBUICAO", hoje)
 
         parts, conds = await self._blocos_part(page)
-        self._log(f"    [participantes] parts={parts} conds={conds}")
         if len(parts) >= 1:
             await self._sel2(page, parts[0], nome)
             if len(conds) >= 1: await self._sel2(page, conds[0], "Réu")
@@ -473,7 +421,6 @@ class CadastroPastasBennerPW:
             await self._texto(page, TEXT_FN["VALOR_PEDIDO_1"], f"{valor:.2f}".replace(".", ","))
         await self._sel2(page, "RISCOPEDIDO1", "Possível")
 
-        self._log("    Salvando (clique nativo)...")
         return await self._salvar(page)
 
     async def _salvar(self, page):
@@ -482,10 +429,9 @@ class CadastroPastasBennerPW:
         
         async def dlg():
             try:
-                b = page.locator(".modal.in .modal-footer button, .modal.show .modal-footer button, .bootstrap-dialog-footer button", has_text="Sim").first
+                b = page.locator(".modal.in .modal-footer button, .modal.show .modal-footer button, .bootstrap-dialog-footer button", has_test="Sim").first
                 if await b.count() and await b.is_visible():
                     await b.click(); await self._esperar_rede(page)
-                    self._log("    [salvar] diálogo -> Sim.")
             except Exception: pass
             
         try:
@@ -513,7 +459,6 @@ class CadastroPastasBennerPW:
             try:
                 corpo = (await page.locator("body").inner_text())[:2000].lower()
                 if "problema ao renderizar" in corpo or "failed to load viewstate" in corpo:
-                    self._log("    [salvar] ERRO renderização (viewstate).")
                     return False, "viewstate"
             except Exception: pass
             
@@ -535,7 +480,6 @@ class CadastroPastasBennerPW:
                 if "bennercloud" in (pg.url or "").lower():
                     home = pg; break
             home = home or (ctx.pages[0] if ctx.pages else await ctx.new_page())
-            self._log(f"Aba inicial: {home.url[:70]}")
 
             ok_t = err_t = 0
             for row in pend:
@@ -552,7 +496,6 @@ class CadastroPastasBennerPW:
                     
                     form = await self._abrir_e_categoria(home, ctx)
                     if form is None:
-                        self._log(f"  [linha {row}] {nome}: não chegou ao form real.")
                         err_t += 1; break
                         
                     salvo, ident = await self._preencher(form, {"nome": nome, "uf": uf, "numero_cnj": numero, "valor_pedido": valor})
@@ -573,7 +516,6 @@ class CadastroPastasBennerPW:
                     err_t += 1; break
             self._log(f"Concluído! Sucesso: {ok_t}, Erros: {err_t}")
 
-    # [Métodos _verificar_no_benner_async, verificar_no_benner, fechar omitidos por brevidade - mantidos originais]
     def cadastrar_pastas(self): asyncio.run(self.cadastrar_pastas_async())
     def fechar(self): pass
 
@@ -582,19 +524,15 @@ def main():
     DIR = Path(r"K:\BennerData\CadastraPastas")
     arquivo = sys.argv[1] if len(sys.argv) > 1 else str(DIR / "Ajuizamento+2024+2+parte+ (2) -Planilha original.xlsx")
     if not Path(arquivo).exists():
-        print(f"ERRO: Arquivo não encontrado: {arquivo}")
         sys.exit(1)
 
     cadastro = CadastroPastasBennerPW(arquivo)
     while True:
-        print("
-Opções:
-  3 - Etapa 3: Cadastrar pastas (Playwright)
-  9 - Sair")
+        print("\\nOpções:\\n  3 - Etapa 3: Cadastrar pastas (Playwright)\\n  9 - Sair")
         op = input("Escolha: ").strip()
         if op == "3": cadastro.cadastrar_pastas(); cadastro.fechar()
         elif op == "9": cadastro.fechar(); break
-        else: print("Opção inválida.")
 
 if __name__ == "__main__":
     main()
+''')
