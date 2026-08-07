@@ -1,0 +1,85 @@
+[2026-08-07 18:07:22] Planilha carregada: K:\BennerData\CadastraPastas\Ajuizamento+2024+2+parte+ (2) -Planilha original.xlsx [Planilha1]
+[2026-08-07 18:07:22] Cadastrando 1 pastas (Playwright)...
+[2026-08-07 18:07:22] Conectando ao Edge debug http://127.0.0.1:9222 ...
+[2026-08-07 18:07:22] Aba inicial: https://previ.bennercloud.com.br/JURIDICO/jur/e/PREVI.aspx?i=K9_INICIO
+[2026-08-07 18:07:28]     [select2] CATEGORIA = 'Cível' OK.
+[2026-08-07 18:07:29]     [categoria] OK acionado (__doPostBack).
+[2026-08-07 18:07:35]     [conn] form real: https://previ.bennercloud.com.br/JURIDICO/jur/a/PR_CADASTROR
+[2026-08-07 18:07:35]     [NETHOOK] instalação: ok
+[2026-08-07 18:07:35]     === Preenchendo: ALDA ROSANGELA MULLER CERCATO (UF=RS) ===
+[2026-08-07 18:08:07]     [select2] Erro ao clicar na opção para DEPARTAMENTO: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator(".select2-results").last.locator("li.select2-results__option:not(.loading-results)").first
+
+[2026-08-07 18:08:22]     [select2] DIVISAO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"DIVISAO\"]").firs
+[2026-08-07 18:08:37]     [select2] FILIAL FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"FILIAL\"]").first
+[2026-08-07 18:08:53]     [select2] TIPO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"TIPO\"]").first
+
+[2026-08-07 18:09:09]     [select2] ASSUNTO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"ASSUNTO\"]").firs
+[2026-08-07 18:09:24]     [select2] CAUSARAIZ FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"CAUSARAIZ\"]").fi
+[2026-08-07 18:09:39]     [select2] DESDOBRAMENTO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"DESDOBRAMENTO\"]"
+[2026-08-07 18:09:55]     [select2] RITO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"RITO\"]").first
+
+[2026-08-07 18:10:10]     [select2] INSTANCIA FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"INSTANCIA\"]").fi
+[2026-08-07 18:10:25]     [select2] FASE FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"FASE\"]").first
+
+[2026-08-07 18:10:25]     [texto] OBSERVACOES não encontrado.
+[2026-08-07 18:10:40]     [select2] ORGAO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"ORGAO\"]").first
+
+[2026-08-07 18:10:55]     [select2] UF FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"UF\"]").first
+
+[2026-08-07 18:10:55]     [radio] ['número', 'único']='Não': sem-pergunta
+[2026-08-07 18:10:55]     [radio] ['tipo', 'processo']='Ativo': sem-pergunta
+[2026-08-07 18:10:55]     [radio] ['processo', 'relevante']='Não': sem-pergunta
+[2026-08-07 18:10:55]     [radio] ['localiza']='Física': sem-pergunta
+[2026-08-07 18:10:55]     [radio] ['distribu', 'judicial']='Não': sem-pergunta
+[2026-08-07 18:10:56]     [radio] ['adverso', 'cadastrado']='Sim': sem-pergunta
+[2026-08-07 18:10:56]     [radio] ['advogado', 'adverso']='Sim': sem-pergunta
+[2026-08-07 18:10:57]     [texto] NUMERODISTRIBUICAO não encontrado.
+[2026-08-07 18:11:12]     [select2] EVENTO1 FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"EVENTO1\"]").firs
+[2026-08-07 18:11:12]     [texto] DATAANDAMENTO1 não encontrado.
+[2026-08-07 18:11:13]     [texto] DATADISTRIBUICAO não encontrado.
+[2026-08-07 18:11:13]     [participantes] parts=[] conds=[]
+[2026-08-07 18:11:28]     [select2] ADVOGADOINTERNO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"ADVOGADOINTERNO\"
+[2026-08-07 18:11:43]     [select2] ADVOGADOEXTERNO FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"ADVOGADOEXTERNO\"
+[2026-08-07 18:11:58]     [select2] PEDIDO1 FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"PEDIDO1\"]").firs
+[2026-08-07 18:11:58]     [texto] VALORPEDIDO1 não encontrado.
+[2026-08-07 18:12:13]     [select2] RISCOPEDIDO1 FALHOU: Locator.wait_for: Timeout 15000ms exceeded.
+Call log:
+  - waiting for locator("select[data-fieldname=\"RISCOPEDIDO1\"]")
+[2026-08-07 18:12:13]     Salvando (clique nativo)...
+[2026-08-07 18:12:13]     [NETHOOK] instalação: ok
+[2026-08-07 18:12:46]     [NETHOOK] dump: K:\BennerData\CadastraPastas\diagnostico_rede\20260807_181246_save_ruim.json (eventos=8)
+[2026-08-07 18:12:46] Planilha salva.
+[2026-08-07 18:12:46]   [linha 6] ALDA ROSANGELA MULLER CERCATO: FALHOU (sem-confirmacao)
+[2026-08-07 18:12:46] Concluído! Sucesso: 0, Erros: 1
