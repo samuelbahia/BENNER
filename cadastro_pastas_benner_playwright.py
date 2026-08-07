@@ -563,19 +563,39 @@ class CadastroPastasBennerPW:
         try:
             sel = page.locator(f'select[data-fieldname="{fieldname}"]').first
             await sel.wait_for(state="attached", timeout=timeout)
+            
+            # **CORREÇÃO AQUI**: Verificar se o elemento container está no DOM e visível ANTES de interagir
+            cont = sel.locator('xpath=following-sibling::*[contains(@class,"select2")][1]')
+            try:
+                # Espera o container ficar anexado e visível
+                await cont.wait_for(state="attached", timeout=timeout)
+                await cont.wait_for(state="visible", timeout=timeout)
+                await cont.scroll_into_view_if_needed()
+            except PWTimeout:
+                 self._log(f"    [select2] container para {fieldname} não ficou visível a tempo.")
+                 return False
+            except Exception as e:
+                 self._log(f"    [select2] Erro ao aguardar container para {fieldname}: {e}")
+                 return False
+
             # fechar qualquer dropdown aberto antes
             try:
                 await page.keyboard.press("Escape")
+                await page.wait_for_timeout(200) # Pequena pausa para garantir o fechamento
             except Exception:
                 pass
-            cont = sel.locator('xpath=following-sibling::*[contains(@class,"select2")][1]')
-            await cont.scroll_into_view_if_needed()
+            
             # clicar no "selection" (a caixa visivel) para abrir o dropdown
             selection = cont.locator(".select2-selection").first
-            if await selection.count():
-                await selection.click()
-            else:
-                await cont.click()
+            try:
+                 if await selection.count() and await selection.is_visible():
+                     await selection.click()
+                 else:
+                     await cont.click()
+            except Exception as e:
+                self._log(f"    [select2] Erro ao clicar no container/selection para {fieldname}: {e}")
+                return False
+
             await page.wait_for_timeout(300)
             # o input de busca do dropdown ABERTO: dentro de .select2-dropdown
             # (que e unico quando ha um dropdown aberto) OU o container--open.
@@ -604,8 +624,16 @@ class CadastroPastasBennerPW:
             if await opt.count() == 0:
                 opt = base.locator(
                     "li.select2-results__option:not(.loading-results)").first
-            await opt.scroll_into_view_if_needed()
-            await opt.click()
+            
+            try:
+                 await opt.wait_for(state="attached", timeout=timeout)
+                 await opt.wait_for(state="visible", timeout=timeout)
+                 await opt.scroll_into_view_if_needed()
+                 await opt.click()
+            except Exception as e:
+                 self._log(f"    [select2] Erro ao clicar na opção para {fieldname}: {e}")
+                 return False
+
             if espera:
                 await self._esperar_rede(page)
             self._log(f"    [select2] {fieldname} = '{texto[:30]}' OK.")
@@ -641,7 +669,7 @@ class CadastroPastasBennerPW:
     async def _radio(self, page, termos, label):
         js = """(a)=>{const T=a.termos.map(t=>t.toLowerCase());
           const A=(a.label||'').toLowerCase().trim();
-          const N=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          const N=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
           const todos=t=>{t=N(t);return T.every(x=>t.indexOf(N(x))>=0);};
           const nos=document.querySelectorAll('label,div,span,td,legend,.tab-label,.label-title');
           let P=null;for(const n of nos){const tx=(n.innerText||n.textContent||'').trim();
@@ -658,7 +686,7 @@ class CadastroPastasBennerPW:
             if rid in ("sem-pergunta", "sem-radio", "RID"):
                 self._log(f"    [radio] {termos}='{label}': {rid}")
                 return False
-            esc = re.sub(r'([^a-zA-Z0-9_\-])', r'\\\1', rid)
+            esc = re.sub(r'([^a-zA-Z0-9_\-])', r'\\', rid)
             r = page.locator(f'#{esc}')
             await r.scroll_into_view_if_needed()
             # clicar no LABEL (mais confiavel que check() no ASP.NET)
@@ -918,8 +946,7 @@ class CadastroPastasBennerPW:
                 uf = str(ws.cell(row, COL_UF).value or "").strip().upper()
                 numero = str(ws.cell(row, COL_CNJ).value or f"DP{contrato}")
                 vp = ws.cell(row, COL_VALOR_PEDIDO).value
-                valor = _parse_valor_br(vp) if vp not in (None, "") \
-                    else _parse_valor_br(ws.cell(row, COL_VALOR_DIVIDA).value)
+                valor = _parse_valor_br(vp) if vp not in (None, "")                     else _parse_valor_br(ws.cell(row, COL_VALOR_DIVIDA).value)
                 try:
                     try:
                         await home.bring_to_front()
@@ -1009,8 +1036,7 @@ class CadastroPastasBennerPW:
 def main():
     import sys
     DIR = Path(r"K:\BennerData\CadastraPastas")
-    arquivo = sys.argv[1] if len(sys.argv) > 1 else \
-        str(DIR / "Ajuizamento+2024+2+parte+ (2) -Planilha original.xlsx")
+    arquivo = sys.argv[1] if len(sys.argv) > 1 else         str(DIR / "Ajuizamento+2024+2+parte+ (2) -Planilha original.xlsx")
     if not Path(arquivo).exists():
         print(f"ERRO: Arquivo não encontrado: {arquivo}")
         sys.exit(1)
