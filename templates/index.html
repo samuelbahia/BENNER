@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Builder Agent - BENNER</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .panel {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .panel h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #5a67d8;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #5a67d8;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 103, 216, 0.4);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .column-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            background: white;
+        }
+
+        .column-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #edf2f7;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-item:hover {
+            background: #e2e8f0;
+            transform: translateX(5px);
+        }
+
+        .column-item.selected {
+            background: #bee3f8;
+            border-left: 4px solid #5a67d8;
+        }
+
+        .selected-columns {
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .selected-item {
+            background: #c3dafe;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .remove-btn {
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .join-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .join-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .sql-output {
+            background: #1a202c;
+            color: #68d391;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-type {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #5a67d8;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .copy-btn {
+            position: relative;
+            float: right;
+            margin-top: -40px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 SQL Builder Agent</h1>
+            <p>Construa consultas SQL inteligentes com seletor de tabelas e colunas</p>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <div class="content">
+            <!-- Left Panel: Table and Column Selection -->
+            <div class="panel">
+                <h2>1. Selecionar Tabelas e Colunas</h2>
+                
+                <div class="form-group">
+                    <label for="table-select">Selecione uma Tabela:</label>
+                    <select id="table-select">
+                        <option value="">-- Escolha uma tabela --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Colunas Disponíveis:</label>
+                    <div id="columns-list" class="column-list">
+                        <p style="text-align: center; color: #718096;">Selecione uma tabela para ver as colunas</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Colunas Selecionadas:</label>
+                    <div id="selected-columns" class="selected-columns">
+                        <p style="text-align: center; color: #718096;">Nenhuma coluna selecionada</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" onclick="clearColumns()">Limpar Seleção</button>
+            </div>
+
+            <!-- Right Panel: Joins Configuration -->
+            <div class="panel">
+                <h2>2. Configurar Joins</h2>
+                
+                <div id="joins-container">
+                    <p style="text-align: center; color: #718096;">Nenhum join configurado</p>
+                </div>
+
+                <button class="btn btn-success" onclick="addJoin()">+ Adicionar Join</button>
+                <button class="btn btn-secondary" onclick="clearJoins()">Limpar Joins</button>
+            </div>
+
+            <!-- Additional Options -->
+            <div class="panel">
+                <h2>3. Opções Adicionais</h2>
+                
+                <div class="form-group">
+                    <label for="where-input">Condições WHERE (uma por linha):</label>
+                    <textarea id="where-input" rows="3" placeholder="Ex: PR_PROCESSOS.STATUS = 'ATIVO'"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="order-input">ORDER BY:</label>
+                    <input type="text" id="order-input" placeholder="Ex: NOME ASC, DATA DESC">
+                </div>
+
+                <div class="form-group">
+                    <label for="group-input">GROUP BY:</label>
+                    <input type="text" id="group-input" placeholder="Ex: DEPARTAMENTO, CATEGORIA">
+                </div>
+
+                <div class="form-group">
+                    <label for="limit-input">LIMIT:</label>
+                    <input type="number" id="limit-input" placeholder="Ex: 100">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="auto-infer-joins"> Inferir joins automaticamente
+                    </label>
+                </div>
+            </div>
+
+            <!-- Query Output -->
+            <div class="panel full-width">
+                <h2>4. SQL Gerado</h2>
+                <button class="btn btn-primary" onclick="buildQuery()">🚀 Gerar SQL</button>
+                <button class="btn btn-secondary" onclick="resetAll()">🔄 Resetar Tudo</button>
+                <button class="btn btn-success copy-btn" onclick="copySQL()">📋 Copiar SQL</button>
+                
+                <div id="sql-output" class="sql-output">
+                    -- Seu SQL aparecerá aqui
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedColumns = [];
+        let joins = [];
+        let tables = [];
+        let joinCounter = 0;
+
+        // Load tables on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTables();
+        });
+
+        // Load available tables
+        async function loadTables() {
+            try {
+                const response = await fetch('/api/tables');
+                const data = await response.json();
+                
+                if (data.success) {
+                    tables = data.tables;
+                    const select = document.getElementById('table-select');
+                    
+                    data.tables.forEach(table => {
+                        const option = document.createElement('option');
+                        option.value = table;
+                        option.textContent = table;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar tabelas: ' + error.message, 'error');
+            }
+        }
+
+        // Handle table selection
+        document.getElementById('table-select').addEventListener('change', async function(e) {
+            const tableName = e.target.value;
+            if (!tableName) {
+                document.getElementById('columns-list').innerHTML = '<p style="text-align: center; color: #718096;">Selecione uma tabela para ver as colunas</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/tables/${tableName}/columns`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayColumns(tableName, data.columns);
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar colunas: ' + error.message, 'error');
+            }
+        });
+
+        // Display columns for selected table
+        function displayColumns(tableName, columns) {
+            const container = document.getElementById('columns-list');
+            container.innerHTML = '';
+
+            if (columns.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #718096;">Nenhuma coluna encontrada</p>';
+                return;
+            }
+
+            columns.forEach(col => {
+                const div = document.createElement('div');
+                div.className = 'column-item';
+                div.innerHTML = `
+                    <span>${col.name} <span class="badge badge-type">${col.type}</span></span>
+                    <button class="btn btn-success" style="padding: 4px 8px; font-size: 12px;" onclick="selectColumn('${tableName}', '${col.name}')">Adicionar</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Select a column
+        function selectColumn(table, column) {
+            const exists = selectedColumns.find(c => c.table === table && c.column === column);
+            if (exists) {
+                showAlert('Esta coluna já foi selecionada!', 'error');
+                return;
+            }
+
+            selectedColumns.push({ table, column });
+            updateSelectedColumns();
+            showAlert(`Coluna ${table}.${column} adicionada!`, 'success');
+        }
+
+        // Update selected columns display
+        function updateSelectedColumns() {
+            const container = document.getElementById('selected-columns');
+            
+            if (selectedColumns.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #718096;">Nenhuma coluna selecionada</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            selectedColumns.forEach((col, index) => {
+                const div = document.createElement('div');
+                div.className = 'selected-item';
+                div.innerHTML = `
+                    <span><strong>${col.table}</strong>.${col.column}</span>
+                    <button class="remove-btn" onclick="removeColumn(${index})">✕</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Remove a selected column
+        function removeColumn(index) {
+            selectedColumns.splice(index, 1);
+            updateSelectedColumns();
+        }
+
+        // Clear all selected columns
+        function clearColumns() {
+            selectedColumns = [];
+            updateSelectedColumns();
+            showAlert('Todas as colunas foram removidas', 'success');
+        }
+
+        // Add a new join
+        function addJoin() {
+            const joinId = joinCounter++;
+            const join = {
+                id: joinId,
+                type: 'INNER',
+                table: '',
+                leftTable: '',
+                leftColumn: '',
+                rightTable: '',
+                rightColumn: ''
+            };
+            joins.push(join);
+            updateJoinsDisplay();
+        }
+
+        // Update joins display
+        function updateJoinsDisplay() {
+            const container = document.getElementById('joins-container');
+            
+            if (joins.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #718096;">Nenhum join configurado</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            joins.forEach((join, index) => {
+                const div = document.createElement('div');
+                div.className = 'join-item';
+                div.innerHTML = `
+                    <div class="form-group">
+                        <label>Tipo de Join:</label>
+                        <select onchange="updateJoin(${index}, 'type', this.value)">
+                            <option value="INNER" ${join.type === 'INNER' ? 'selected' : ''}>INNER JOIN</option>
+                            <option value="LEFT" ${join.type === 'LEFT' ? 'selected' : ''}>LEFT JOIN</option>
+                            <option value="RIGHT" ${join.type === 'RIGHT' ? 'selected' : ''}>RIGHT JOIN</option>
+                            <option value="FULL" ${join.type === 'FULL' ? 'selected' : ''}>FULL OUTER JOIN</option>
+                        </select>
+                    </div>
+                    <div class="join-controls">
+                        <div class="form-group">
+                            <label>Tabela:</label>
+                            <select onchange="updateJoin(${index}, 'table', this.value)">
+                                <option value="">-- Selecione --</option>
+                                ${tables.map(t => `<option value="${t}" ${join.table === t ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tabela Esquerda:</label>
+                            <select onchange="updateJoin(${index}, 'leftTable', this.value)">
+                                <option value="">-- Selecione --</option>
+                                ${tables.map(t => `<option value="${t}" ${join.leftTable === t ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Coluna Esquerda:</label>
+                            <input type="text" value="${join.leftColumn}" onchange="updateJoin(${index}, 'leftColumn', this.value)" placeholder="Ex: HANDLE">
+                        </div>
+                        <div class="form-group">
+                            <label>Tabela Direita:</label>
+                            <select onchange="updateJoin(${index}, 'rightTable', this.value)">
+                                <option value="">-- Selecione --</option>
+                                ${tables.map(t => `<option value="${t}" ${join.rightTable === t ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Coluna Direita:</label>
+                            <input type="text" value="${join.rightColumn}" onchange="updateJoin(${index}, 'rightColumn', this.value)" placeholder="Ex: USUARIO">
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" style="width: 100%; margin-top: 10px;" onclick="removeJoin(${index})">Remover Join</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Update join properties
+        function updateJoin(index, field, value) {
+            joins[index][field] = value;
+        }
+
+        // Remove a join
+        function removeJoin(index) {
+            joins.splice(index, 1);
+            updateJoinsDisplay();
+        }
+
+        // Clear all joins
+        function clearJoins() {
+            joins = [];
+            updateJoinsDisplay();
+            showAlert('Todos os joins foram removidos', 'success');
+        }
+
+        // Build the SQL query
+        async function buildQuery() {
+            if (selectedColumns.length === 0) {
+                showAlert('Selecione pelo menos uma coluna!', 'error');
+                return;
+            }
+
+            const whereText = document.getElementById('where-input').value;
+            const whereConditions = whereText.split('\n').filter(line => line.trim());
+
+            const orderText = document.getElementById('order-input').value;
+            const orderBy = orderText ? orderText.split(',').map(o => {
+                const parts = o.trim().split(' ');
+                return {
+                    column: parts[0],
+                    ascending: !parts[1] || parts[1].toUpperCase() === 'ASC'
+                };
+            }) : [];
+
+            const groupText = document.getElementById('group-input').value;
+            const groupBy = groupText ? groupText.split(',').map(g => g.trim()) : [];
+
+            const limit = document.getElementById('limit-input').value;
+            const autoInferJoins = document.getElementById('auto-infer-joins').checked;
+
+            const payload = {
+                columns: selectedColumns,
+                joins: joins,
+                where: whereConditions,
+                orderBy: orderBy,
+                groupBy: groupBy,
+                limit: limit ? parseInt(limit) : null,
+                autoInferJoins: autoInferJoins
+            };
+
+            try {
+                const response = await fetch('/api/build-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('sql-output').textContent = data.query;
+                    showAlert('SQL gerado com sucesso!', 'success');
+                } else {
+                    showAlert('Erro: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erro ao gerar SQL: ' + error.message, 'error');
+            }
+        }
+
+        // Copy SQL to clipboard
+        function copySQL() {
+            const sqlText = document.getElementById('sql-output').textContent;
+            navigator.clipboard.writeText(sqlText).then(() => {
+                showAlert('SQL copiado para a área de transferência!', 'success');
+            }).catch(err => {
+                showAlert('Erro ao copiar: ' + err.message, 'error');
+            });
+        }
+
+        // Reset everything
+        function resetAll() {
+            selectedColumns = [];
+            joins = [];
+            joinCounter = 0;
+            document.getElementById('where-input').value = '';
+            document.getElementById('order-input').value = '';
+            document.getElementById('group-input').value = '';
+            document.getElementById('limit-input').value = '';
+            document.getElementById('auto-infer-joins').checked = false;
+            document.getElementById('sql-output').textContent = '-- Seu SQL aparecerá aqui';
+            updateSelectedColumns();
+            updateJoinsDisplay();
+            showAlert('Tudo foi resetado!', 'success');
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.margin = '20px 30px 0';
+            
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
